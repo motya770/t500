@@ -58,10 +58,13 @@ class TestGetAllIndicators:
         result = get_all_indicators()
         assert isinstance(result, dict)
 
-    def test_contains_all_indicators(self):
+    def test_contains_all_unique_indicators(self):
         result = get_all_indicators()
-        total = sum(len(v) for v in INDICATOR_CATEGORIES.values())
-        assert len(result) == total
+        # Some indicators appear in multiple categories, so count unique codes
+        all_codes = set()
+        for indicators in INDICATOR_CATEGORIES.values():
+            all_codes.update(indicators.keys())
+        assert len(result) == len(all_codes)
 
     def test_values_are_descriptions(self):
         result = get_all_indicators()
@@ -69,11 +72,11 @@ class TestGetAllIndicators:
             assert isinstance(desc, str)
             assert len(desc) > 0
 
-    def test_no_duplicate_codes_across_categories(self):
-        all_codes = []
-        for indicators in INDICATOR_CATEGORIES.values():
-            all_codes.extend(indicators.keys())
-        assert len(all_codes) == len(set(all_codes)), "Duplicate indicator codes found"
+    def test_all_category_indicators_in_flat_dict(self):
+        result = get_all_indicators()
+        for cat, indicators in INDICATOR_CATEGORIES.items():
+            for code in indicators:
+                assert code in result, f"Code {code} from '{cat}' missing in get_all_indicators()"
 
 
 class TestGetCountryGroups:
