@@ -12,3 +12,5 @@ yfinance>=0.2.0
 feedparser>=6.0.0
 textblob>=0.18.0
 requests>=2.31.0
+huggingface_hub>=0.20.0
+pyarrow>=14.0.0

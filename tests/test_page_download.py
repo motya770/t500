@@ -22,7 +22,8 @@ class TestPageDownloadRender:
         # Mock UI components to return no selections
         mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.checkbox.return_value = False
-        mock_st.radio.return_value = "Predefined groups"
+        # First radio = data source, second = country mode
+        mock_st.radio.side_effect = ["World Bank API", "Predefined groups"]
         mock_st.multiselect.return_value = ["G7"]
         mock_st.number_input.side_effect = [2000, 2023]
         mock_st.text_input.return_value = "economic_data"
@@ -46,7 +47,7 @@ class TestPageDownloadRender:
         mock_st.session_state = {}
         mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.checkbox.return_value = False
-        mock_st.radio.return_value = "Predefined groups"
+        mock_st.radio.side_effect = ["World Bank API", "Predefined groups"]
         mock_st.multiselect.return_value = ["G7"]
         # Start year > end year
         mock_st.number_input.side_effect = [2023, 2000]
@@ -77,7 +78,7 @@ class TestPageDownloadRender:
 
         # Simulate that the checkbox for the indicator is checked
         mock_st.checkbox.return_value = True
-        mock_st.radio.return_value = "Predefined groups"
+        mock_st.radio.side_effect = ["World Bank API", "Predefined groups"]
         mock_st.multiselect.return_value = ["G7"]
         mock_st.number_input.side_effect = [2020, 2021]
         mock_st.text_input.return_value = "test_data"
@@ -97,7 +98,7 @@ class TestPageDownloadRender:
             "year": [2020, 2021],
             "NY.GDP.MKTP.CD": [21000.0, 22000.0],
         })
-        mock_download.return_value = df
+        mock_download.return_value = (df, [])
         from pathlib import Path
         mock_save.return_value = Path("data/test_data.csv")
 
@@ -121,14 +122,14 @@ class TestPageDownloadRender:
         mock_st.session_state = {}
         mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.checkbox.return_value = True
-        mock_st.radio.return_value = "Predefined groups"
+        mock_st.radio.side_effect = ["World Bank API", "Predefined groups"]
         mock_st.multiselect.return_value = ["G7"]
         mock_st.number_input.side_effect = [2020, 2021]
         mock_st.text_input.return_value = "test"
         mock_st.button.return_value = True
         mock_st.progress.return_value = MagicMock()
         mock_st.empty.return_value = MagicMock()
-        mock_download.return_value = pd.DataFrame()
+        mock_download.return_value = (pd.DataFrame(), [])
 
         from ui.page_download import render
         render()
@@ -148,7 +149,7 @@ class TestPageDownloadRender:
         mock_st.session_state = {}
         mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.checkbox.return_value = True
-        mock_st.radio.return_value = "Predefined groups"
+        mock_st.radio.side_effect = ["World Bank API", "Predefined groups"]
         mock_st.multiselect.return_value = ["G7"]
         mock_st.number_input.side_effect = [2020, 2021]
         mock_st.text_input.return_value = "test"
@@ -173,7 +174,7 @@ class TestPageDownloadRender:
         mock_st.session_state = {}
         mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.checkbox.return_value = False
-        mock_st.radio.return_value = "Manual entry"
+        mock_st.radio.side_effect = ["World Bank API", "Manual entry"]
         mock_st.text_area.return_value = "USA, GBR, DEU"
         mock_st.number_input.side_effect = [2020, 2023]
         mock_st.text_input.return_value = "test"
