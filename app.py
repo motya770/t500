@@ -19,7 +19,7 @@ st.sidebar.markdown("---")
 page = st.sidebar.radio(
     "Navigation",
     ["Download Data", "Stock / ETF Data", "Explore & Visualize", "Correlation Analysis",
-     "Cargo Plane Analysis", "News Sentiment"],
+     "Cargo Plane Analysis", "Oil Tanker Analysis", "News Sentiment"],
 )
 
 st.sidebar.markdown("---")
@@ -32,6 +32,8 @@ st.sidebar.markdown(
     "Elastic Net, PCA, Autoencoder, Granger Causality\n\n"
     "**Cargo Analysis:** Freight trends, rankings, YoY growth, "
     "cargo intensity, economic correlations, ML growth drivers\n\n"
+    "**Oil Tanker Analysis:** Oil production trends, trade flows, "
+    "tanker routes, US deep dive, dependency scores, ML drivers\n\n"
     "**News Sentiment:** Financial news analysis via RSS feeds "
     "with TextBlob + financial lexicon scoring"
 )
@@ -51,6 +53,9 @@ elif page == "Correlation Analysis":
     render()
 elif page == "Cargo Plane Analysis":
     from ui.page_cargo import render
+    render()
+elif page == "Oil Tanker Analysis":
+    from ui.page_oil_tankers import render
     render()
 elif page == "News Sentiment":
     from ui.page_news_sentiment import render
