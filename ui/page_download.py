@@ -12,11 +12,11 @@ from data_sources.world_bank import (
 
 
 def render():
-    st.header("Download Economic Data")
+    st.header("\U0001F682 Download Economic Data")
     st.write("Select indicators and countries to download from the World Bank Open Data API.")
 
     # --- Indicator selection ---
-    st.subheader("1. Select Indicators")
+    st.subheader("\U0001F527 1. Select Indicators")
 
     all_indicators = get_all_indicators()
     selected_codes = []
@@ -44,7 +44,7 @@ def render():
         st.info("Select at least one indicator to proceed.")
 
     # --- Country selection ---
-    st.subheader("2. Select Countries")
+    st.subheader("\U0001F30D 2. Select Countries")
 
     country_groups = get_country_groups()
     selection_mode = st.radio(
@@ -75,7 +75,7 @@ def render():
         selected_countries = [c.strip() for c in manual_input.split(",") if c.strip()]
 
     # --- Year range ---
-    st.subheader("3. Select Year Range")
+    st.subheader("\U0001F4C5 3. Select Year Range")
     col1, col2 = st.columns(2)
     with col1:
         start_year = st.number_input("Start year", min_value=1960, max_value=2023, value=2000)
@@ -87,7 +87,7 @@ def render():
         return
 
     # --- Dataset name ---
-    st.subheader("4. Name Your Dataset")
+    st.subheader("\U0001F3F7\uFE0F 4. Name Your Dataset")
     dataset_name = st.text_input(
         "Dataset name",
         value="economic_data",
@@ -106,7 +106,7 @@ def render():
 
     st.write(f"**Summary:** {len(selected_codes)} indicators × {len(selected_countries)} countries × {end_year - start_year + 1} years")
 
-    if st.button("Download Data", type="primary", use_container_width=True):
+    if st.button("\U0001F682 Download Data", type="primary", use_container_width=True):
         progress_bar = st.progress(0)
         status_text = st.empty()
 

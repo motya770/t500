@@ -13,17 +13,18 @@ from data_sources.stock_data import (
     save_stock_dataset,
 )
 from data_sources.world_bank import list_saved_datasets, load_dataset
+from ui.theme import apply_steam_style, CHART_COLORS, BRASS, COPPER, EMBER, CREAM
 
 
 def render():
-    st.header("Download Stock / ETF Data")
+    st.header("\U0001F4C8 Download Stock / ETF Data")
     st.write(
         "Download stock and ETF price data to investigate how economic indicators "
         "are reflected in market performance. Focused on VOO (S&P 500) and QQQ (NASDAQ-100)."
     )
 
     # --- Ticker selection ---
-    st.subheader("1. Select Tickers")
+    st.subheader("\U0001F3F7\uFE0F 1. Select Tickers")
 
     all_tickers = get_all_tickers()
     selected_tickers = []
@@ -50,7 +51,7 @@ def render():
         st.info("Select at least one ticker to proceed.")
 
     # --- Date range ---
-    st.subheader("2. Select Date Range")
+    st.subheader("\U0001F4C5 2. Select Date Range")
     col1, col2 = st.columns(2)
     with col1:
         start_year = st.number_input("Start year", min_value=1990, max_value=2025, value=2000, key="stock_start")
@@ -69,7 +70,7 @@ def render():
     )
 
     # --- Dataset name ---
-    st.subheader("3. Name Your Dataset")
+    st.subheader("\U0001F3F7\uFE0F 3. Name Your Dataset")
     dataset_name = st.text_input(
         "Dataset name",
         value="stock_data",
@@ -84,7 +85,7 @@ def render():
         st.warning("Please select at least one ticker.")
         return
 
-    if st.button("Download Stock Data", type="primary", use_container_width=True):
+    if st.button("\U0001F682 Download Stock Data", type="primary", use_container_width=True):
         with st.spinner(f"Downloading data for {', '.join(selected_tickers)}..."):
             try:
                 df = download_stock_data(
@@ -138,6 +139,7 @@ def _show_stock_results(df, annual, tickers):
             y=ticker_data["close"],
             mode="lines",
             name=f"{ticker} Close",
+            line=dict(color=BRASS),
         ))
         fig.update_layout(
             title=f"{ticker} - {get_all_tickers().get(ticker, ticker)}",
@@ -145,6 +147,7 @@ def _show_stock_results(df, annual, tickers):
             yaxis_title="Price (USD)",
             hovermode="x unified",
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
     # Annual returns comparison
@@ -158,7 +161,9 @@ def _show_stock_results(df, annual, tickers):
             barmode="group",
             title="Annual Returns (%)",
             labels={"annual_return_pct": "Return (%)", "year": "Year"},
+            color_discrete_sequence=CHART_COLORS,
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
         # Volatility comparison
@@ -171,7 +176,9 @@ def _show_stock_results(df, annual, tickers):
             title="Annual Volatility (Std Dev of Monthly Returns %)",
             labels={"volatility": "Volatility (%)", "year": "Year"},
             markers=True,
+            color_discrete_sequence=CHART_COLORS,
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -196,7 +203,7 @@ def _offer_merge_with_economic(annual):
 
     econ_dataset = st.selectbox("Economic dataset to merge with", economic_datasets, key="merge_econ")
 
-    if st.button("Merge Datasets", key="merge_btn"):
+    if st.button("\U0001F517 Merge Datasets", key="merge_btn"):
         with st.spinner("Merging datasets..."):
             econ_df = load_dataset(econ_dataset)
             merged = merge_stock_with_economic(annual, econ_df, country="USA")
