@@ -81,9 +81,6 @@ INDICATOR_CATEGORIES = {
         "IS.AIR.PSGR": "Air transport, passengers carried",
         "IS.AIR.DPRT": "Air transport, registered carrier departures worldwide",
         "IS.SHP.GOOD.TU": "Container port traffic (TEU: 20 foot equivalent units)",
-        "TG.VAL.TOTL.GD.ZS": "Merchandise trade (% of GDP)",
-        "NE.EXP.GNFS.ZS": "Exports of goods and services (% of GDP)",
-        "NE.IMP.GNFS.ZS": "Imports of goods and services (% of GDP)",
     },
 }
 
