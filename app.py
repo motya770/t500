@@ -30,7 +30,8 @@ page = st.sidebar.radio(
         "\U0001F4C8 Stock / ETF Data",
         "\U0001F50D Explore & Visualize",
         "\U0001F517 Correlation Analysis",
-        "\U00002708 Cargo Plane Analysis",
+        "\U0001F4CA Inflation-Stock Models",
+        "\u2708 Cargo Plane Analysis",
         "\U0001F4F0 News Sentiment",
     ],
 )
@@ -52,6 +53,9 @@ elif page_name == "Explore & Visualize":
     render()
 elif page_name == "Correlation Analysis":
     from ui.page_correlations import render
+    render()
+elif page_name == "Inflation-Stock Models":
+    from ui.page_inflation_stock import render
     render()
 elif page_name == "Cargo Plane Analysis":
     from ui.page_cargo import render
