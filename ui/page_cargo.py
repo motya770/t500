@@ -32,6 +32,10 @@ from analysis.cargo_analysis import (
     compute_cargo_growth_drivers,
     compute_yoy_growth,
 )
+from ui.theme import (
+    apply_steam_style, CHART_COLORS, HEATMAP_SCALE, DIVERGING_SCALE,
+    BRASS, COPPER, EMBER, CREAM, STEEL,
+)
 
 
 def _get_indicator_label(code: str) -> str:
@@ -48,7 +52,7 @@ def _indicator_columns(df: pd.DataFrame) -> list[str]:
 
 
 def render():
-    st.header("Cargo Plane Analysis")
+    st.header("\u2708\uFE0F Cargo Plane Analysis")
     st.markdown(
         "Analyze global air freight and cargo transport patterns, "
         "trends, and their correlations with economic indicators."
@@ -110,7 +114,7 @@ def render():
 
     # --- Analysis selection ---
     st.divider()
-    st.subheader("Analysis Type")
+    st.subheader("\U0001F52C Analysis Type")
 
     analysis = st.selectbox(
         "Choose analysis",
@@ -196,7 +200,7 @@ def _download_cargo_data():
 
     dataset_name = st.text_input("Dataset name", value="cargo_analysis", key="cargo_dl_name")
 
-    if st.button("Download Cargo Data", type="primary", key="cargo_dl_btn"):
+    if st.button("\U0001F682 Download Cargo Data", type="primary", key="cargo_dl_btn"):
         progress = st.progress(0)
         status = st.empty()
 
@@ -267,7 +271,7 @@ def _render_freight_trends(df, cargo_cols, countries):
             x=yearly["year"],
             y=yearly["total"],
             name="Total (all countries)",
-            marker_color="steelblue",
+            marker_color=BRASS,
         ))
         fig.add_trace(go.Scatter(
             x=yearly["year"],
@@ -275,15 +279,18 @@ def _render_freight_trends(df, cargo_cols, countries):
             name="Mean per country",
             yaxis="y2",
             mode="lines+markers",
-            marker_color="firebrick",
+            marker_color=EMBER,
+            line_color=EMBER,
         ))
         fig.update_layout(
             title=f"Global {_get_indicator_label(freight_col)} by Year",
             xaxis_title="Year",
             yaxis_title="Total",
-            yaxis2=dict(title="Mean per Country", overlaying="y", side="right"),
+            yaxis2=dict(title="Mean per Country", overlaying="y", side="right",
+                        titlefont=dict(color=EMBER), tickfont=dict(color=EMBER)),
             hovermode="x unified",
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
     # Per-country time series
@@ -305,8 +312,10 @@ def _render_freight_trends(df, cargo_cols, countries):
                 color="country",
                 title=f"{_get_indicator_label(freight_col)} by Country",
                 labels={freight_col: _get_indicator_label(freight_col), "year": "Year"},
+                color_discrete_sequence=CHART_COLORS,
             )
             fig.update_layout(hovermode="x unified")
+            apply_steam_style(fig)
             st.plotly_chart(fig, use_container_width=True)
 
     # Country growth table
@@ -359,11 +368,12 @@ def _render_rankings(df, cargo_cols, countries):
         x="country",
         y=freight_col,
         color=freight_col,
-        color_continuous_scale="Viridis",
+        color_continuous_scale=HEATMAP_SCALE,
         title=f"Top {top_n} Countries by {_get_indicator_label(freight_col)} ({year})",
         labels={freight_col: _get_indicator_label(freight_col)},
     )
     fig.update_layout(xaxis_tickangle=-45)
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # Ranking table
@@ -390,8 +400,10 @@ def _render_rankings(df, cargo_cols, countries):
             animation_frame="year",
             title=f"Top Countries {_get_indicator_label(freight_col)} Over Time",
             labels={freight_col: _get_indicator_label(freight_col)},
+            color_discrete_sequence=CHART_COLORS,
         )
         fig.update_layout(showlegend=False)
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -420,22 +432,24 @@ def _render_yoy_growth(df, cargo_cols, countries):
         x=yearly_growth["year"],
         y=yearly_growth["mean_growth"],
         name="Mean Growth %",
-        marker_color=["green" if v >= 0 else "red" for v in yearly_growth["mean_growth"]],
+        marker_color=[BRASS if v >= 0 else EMBER for v in yearly_growth["mean_growth"]],
     ))
     fig.add_trace(go.Scatter(
         x=yearly_growth["year"],
         y=yearly_growth["median_growth"],
         name="Median Growth %",
         mode="lines+markers",
-        marker_color="navy",
+        marker_color=COPPER,
+        line_color=COPPER,
     ))
-    fig.add_hline(y=0, line_dash="dash", line_color="gray")
+    fig.add_hline(y=0, line_dash="dash", line_color=STEEL)
     fig.update_layout(
         title=f"Year-over-Year Growth: {_get_indicator_label(freight_col)}",
         xaxis_title="Year",
         yaxis_title="Growth %",
         hovermode="x unified",
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # Per-country growth
@@ -457,9 +471,11 @@ def _render_yoy_growth(df, cargo_cols, countries):
                 color="country",
                 title="Year-over-Year Growth by Country",
                 labels={"yoy_growth_pct": "Growth %", "year": "Year"},
+                color_discrete_sequence=CHART_COLORS,
             )
-            fig.add_hline(y=0, line_dash="dash", line_color="gray")
+            fig.add_hline(y=0, line_dash="dash", line_color=STEEL)
             fig.update_layout(hovermode="x unified")
+            apply_steam_style(fig)
             st.plotly_chart(fig, use_container_width=True)
 
     # Volatility summary
@@ -513,8 +529,10 @@ def _render_cargo_intensity(df, countries):
                 color="country",
                 title=f"{metric} Over Time",
                 labels={col_name: metric, "year": "Year"},
+                color_discrete_sequence=CHART_COLORS,
             )
             fig.update_layout(hovermode="x unified")
+            apply_steam_style(fig)
             st.plotly_chart(fig, use_container_width=True)
 
     # Latest year comparison
@@ -529,11 +547,12 @@ def _render_cargo_intensity(df, countries):
             x="country",
             y=col_name,
             color=col_name,
-            color_continuous_scale="Plasma",
+            color_continuous_scale=HEATMAP_SCALE,
             title=f"{metric} ({latest})",
             labels={col_name: metric},
         )
         fig.update_layout(xaxis_tickangle=-45)
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -566,12 +585,13 @@ def _render_economic_correlations(df, cargo_cols):
         x="indicator_name",
         y="pearson_r",
         color="pearson_r",
-        color_continuous_scale="RdBu_r",
+        color_continuous_scale=DIVERGING_SCALE,
         color_continuous_midpoint=0,
         title=f"Pearson Correlation with {_get_indicator_label(freight_col)}",
         labels={"pearson_r": "Pearson r", "indicator_name": "Indicator"},
     )
     fig.update_layout(xaxis_tickangle=-45)
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # Correlation table
@@ -602,8 +622,10 @@ def _render_economic_correlations(df, cargo_cols):
                         ind: _get_indicator_label(ind),
                     },
                     trendline="ols",
+                    color_discrete_sequence=CHART_COLORS,
                 )
                 fig.update_layout(showlegend=False, height=400)
+                apply_steam_style(fig)
                 st.plotly_chart(fig, use_container_width=True)
 
 
@@ -618,7 +640,7 @@ def _render_growth_drivers(df, cargo_cols):
         key="driver_indicator",
     )
 
-    if st.button("Identify Growth Drivers", type="primary", key="driver_btn"):
+    if st.button("\U0001F682 Identify Growth Drivers", type="primary", key="driver_btn"):
         with st.spinner("Training Random Forest model..."):
             result = compute_cargo_growth_drivers(df, freight_col)
 
@@ -642,9 +664,10 @@ def _render_growth_drivers(df, cargo_cols):
             title=f"Top Drivers of {_get_indicator_label(freight_col)}",
             labels={"importance": "Feature Importance", "indicator_name": "Indicator"},
             color="importance",
-            color_continuous_scale="Viridis",
+            color_continuous_scale=HEATMAP_SCALE,
         )
         fig.update_layout(yaxis=dict(autorange="reversed"))
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
         st.dataframe(
@@ -713,7 +736,9 @@ def _render_multi_indicator(df, cargo_cols, all_indicators, countries):
             y_ind: _get_indicator_label(y_ind),
         },
         trendline="ols",
+        color_discrete_sequence=CHART_COLORS,
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # Heatmap: cargo indicator by country and year
@@ -733,6 +758,7 @@ def _render_multi_indicator(df, cargo_cols, all_indicators, countries):
             title=f"{_get_indicator_label(heatmap_ind)} by Country & Year",
             labels={"color": _get_indicator_label(heatmap_ind)},
             aspect="auto",
-            color_continuous_scale="YlOrRd",
+            color_continuous_scale=HEATMAP_SCALE,
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)

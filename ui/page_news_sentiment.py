@@ -9,15 +9,25 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from ui.theme import (
+    apply_steam_style, CHART_COLORS, BRASS, COPPER, EMBER, CREAM,
+    COAL, DARK_IRON, DARK_WOOD, STEEL, GOLD,
+)
+
+
+# Sentiment colors (themed to match steam palette)
+_POS_COLOR = "#B87333"   # brass / copper for positive
+_NEU_COLOR = "#DAA520"   # gold for neutral
+_NEG_COLOR = "#8B2500"   # dark rust-red for negative
 
 
 def render():
     """Render the News Sentiment Analysis page."""
-    st.header("Financial News Sentiment Analysis")
+    st.header("\U0001F4F0 Financial News Sentiment Analysis")
     st.markdown(
         "Analyze the latest financial news to gauge overall market sentiment "
         "and determine whether the news landscape leans **positive** or "
-        "**negative** — and how useful it is as an advisory signal."
+        "**negative** \u2014 and how useful it is as an advisory signal."
     )
 
     # --- Controls ---
@@ -32,7 +42,7 @@ def render():
         )
     with col2:
         st.markdown("")  # spacer
-        run_btn = st.button("Fetch & Analyze News", type="primary")
+        run_btn = st.button("\U0001F682 Fetch & Analyze News", type="primary")
 
     if run_btn:
         _run_analysis(n_articles)
@@ -139,7 +149,7 @@ def _render_signal_banner(signal: dict):
 
     st.markdown(
         f"### :{color}[Market Sentiment: {signal['signal']}] "
-        f":{icon}: — {signal['signal_strength']} Signal"
+        f":{icon}: \u2014 {signal['signal_strength']} Signal"
     )
 
     c1, c2, c3, c4, c5, c6 = st.columns(6)
@@ -162,7 +172,7 @@ def _render_distribution(df: pd.DataFrame, signal: dict):
             signal["neutral_count"],
             signal["negative_count"],
         ]
-        colors = ["#2ecc71", "#f39c12", "#e74c3c"]
+        colors = [_POS_COLOR, _NEU_COLOR, _NEG_COLOR]
         fig = go.Figure(
             data=[go.Pie(
                 labels=labels,
@@ -170,19 +180,21 @@ def _render_distribution(df: pd.DataFrame, signal: dict):
                 marker=dict(colors=colors),
                 hole=0.4,
                 textinfo="label+percent+value",
+                textfont=dict(color=CREAM),
             )]
         )
         fig.update_layout(
             title="Sentiment Breakdown",
             height=400,
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
         color_map = {
-            "Positive": "#2ecc71",
-            "Neutral": "#f39c12",
-            "Negative": "#e74c3c",
+            "Positive": _POS_COLOR,
+            "Neutral": _NEU_COLOR,
+            "Negative": _NEG_COLOR,
         }
         fig = px.bar(
             df,
@@ -193,8 +205,9 @@ def _render_distribution(df: pd.DataFrame, signal: dict):
             labels={"combined_score": "Sentiment Score", "x": "Article #"},
             title="Per-Article Sentiment Scores",
         )
-        fig.add_hline(y=0, line_dash="dash", line_color="gray")
+        fig.add_hline(y=0, line_dash="dash", line_color=STEEL)
         fig.update_layout(height=400, showlegend=True)
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -214,11 +227,12 @@ def _render_by_source(df: pd.DataFrame):
             x="source",
             y="Mean Score",
             color="Mean Score",
-            color_continuous_scale=["#e74c3c", "#f39c12", "#2ecc71"],
+            color_continuous_scale=[_NEG_COLOR, _NEU_COLOR, _POS_COLOR],
             title="Average Sentiment by Source",
         )
-        fig.add_hline(y=0, line_dash="dash", line_color="gray")
+        fig.add_hline(y=0, line_dash="dash", line_color=STEEL)
         fig.update_layout(height=400)
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
@@ -233,21 +247,23 @@ def _render_histogram(df: pd.DataFrame):
         nbins=30,
         color="label",
         color_discrete_map={
-            "Positive": "#2ecc71",
-            "Neutral": "#f39c12",
-            "Negative": "#e74c3c",
+            "Positive": _POS_COLOR,
+            "Neutral": _NEU_COLOR,
+            "Negative": _NEG_COLOR,
         },
         marginal="box",
         title="Distribution of Sentiment Scores",
         labels={"combined_score": "Combined Sentiment Score"},
     )
-    fig.add_vline(x=0, line_dash="dash", line_color="gray")
+    fig.add_vline(x=0, line_dash="dash", line_color=STEEL)
     mean_val = df["combined_score"].mean()
     fig.add_vline(
-        x=mean_val, line_dash="dot", line_color="blue",
+        x=mean_val, line_dash="dot", line_color=BRASS,
         annotation_text=f"Mean: {mean_val:+.3f}",
+        annotation_font_color=CREAM,
     )
     fig.update_layout(height=450)
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -307,7 +323,7 @@ def _render_article_table(df: pd.DataFrame):
 def _color_sentiment(val):
     """Return CSS color for sentiment label cells."""
     if val == "Positive":
-        return "color: #2ecc71; font-weight: bold"
+        return f"color: {_POS_COLOR}; font-weight: bold"
     elif val == "Negative":
-        return "color: #e74c3c; font-weight: bold"
-    return "color: #f39c12"
+        return f"color: {_NEG_COLOR}; font-weight: bold"
+    return f"color: {_NEU_COLOR}"

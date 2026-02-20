@@ -6,57 +6,64 @@ Run with: streamlit run app.py
 import streamlit as st
 
 st.set_page_config(
-    page_title="Economic Simulation",
-    page_icon="📊",
+    page_title="Econ Express - Steam Train Dashboard",
+    page_icon="\U0001F682",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# Inject steam train theme CSS and register Plotly template
+from ui.theme import STEAM_CSS, HEADER_BANNER, SIDEBAR_HEADER, SIDEBAR_FOOTER  # noqa: E402
+
+st.markdown(STEAM_CSS, unsafe_allow_html=True)
+st.markdown(HEADER_BANNER, unsafe_allow_html=True)
+
 # Sidebar navigation
-st.sidebar.title("Economic Simulation")
+st.sidebar.markdown(SIDEBAR_HEADER, unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
+# Train-themed navigation labels
 page = st.sidebar.radio(
-    "Navigation",
-    ["Download Data", "Stock / ETF Data", "Explore & Visualize", "Correlation Analysis",
-     "Cargo Plane Analysis", "Oil Tanker Analysis", "News Sentiment"],
+    "\U0001F6E4\uFE0F Route Select",
+    [
+        "\U0001F4E6 Download Data",
+        "\U0001F4C8 Stock / ETF Data",
+        "\U0001F50D Explore & Visualize",
+        "\U0001F517 Correlation Analysis",
+        "\U0001F4CA Inflation-Stock Models",
+        "\u2708 Cargo Plane Analysis",
+        "\U0001F6E2 Oil Tanker Analysis",
+        "\U0001F4F0 News Sentiment",
+    ],
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown(
-    "**Data sources:**\n"
-    "- [World Bank Open Data](https://data.worldbank.org/)\n"
-    "- [Yahoo Finance](https://finance.yahoo.com/) (Stock/ETF data)\n\n"
-    "**Methods:** Pearson, Spearman, Kendall, Partial Correlation, "
-    "Mutual Information, Random Forest, Gradient Boosting, Lasso, "
-    "Elastic Net, PCA, Autoencoder, Granger Causality\n\n"
-    "**Cargo Analysis:** Freight trends, rankings, YoY growth, "
-    "cargo intensity, economic correlations, ML growth drivers\n\n"
-    "**Oil Tanker Analysis:** Oil production trends, trade flows, "
-    "tanker routes, US deep dive, dependency scores, ML drivers\n\n"
-    "**News Sentiment:** Financial news analysis via RSS feeds "
-    "with TextBlob + financial lexicon scoring"
-)
+st.sidebar.markdown(SIDEBAR_FOOTER, unsafe_allow_html=True)
 
-# Route to pages
-if page == "Download Data":
+# Route to pages (strip emoji prefix for matching)
+page_name = page.split(" ", 1)[1] if " " in page else page
+
+if page_name == "Download Data":
     from ui.page_download import render
     render()
-elif page == "Stock / ETF Data":
+elif page_name == "Stock / ETF Data":
     from ui.page_stock_download import render
     render()
-elif page == "Explore & Visualize":
+elif page_name == "Explore & Visualize":
     from ui.page_explore import render
     render()
-elif page == "Correlation Analysis":
+elif page_name == "Correlation Analysis":
     from ui.page_correlations import render
     render()
-elif page == "Cargo Plane Analysis":
+elif page_name == "Inflation-Stock Models":
+    from ui.page_inflation_stock import render
+    render()
+elif page_name == "Cargo Plane Analysis":
     from ui.page_cargo import render
     render()
-elif page == "Oil Tanker Analysis":
+elif page_name == "Oil Tanker Analysis":
     from ui.page_oil_tankers import render
     render()
-elif page == "News Sentiment":
+elif page_name == "News Sentiment":
     from ui.page_news_sentiment import render
     render()
