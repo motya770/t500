@@ -260,10 +260,10 @@ def get_all_oil_indicators() -> list[str]:
 def download_oil_data(
     countries: list[str],
     start_year: int = 2000,
-    end_year: int = 2023,
+    end_year: int = 2025,
     include_economic: bool = True,
     progress_callback=None,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[str]]:
     """Download oil-related indicators from World Bank.
 
     Parameters
@@ -279,8 +279,8 @@ def download_oil_data(
 
     Returns
     -------
-    pd.DataFrame
-        Wide-format DataFrame with country, year, and indicator columns.
+    tuple[pd.DataFrame, list[str]]
+        (DataFrame with country/year/indicator columns, list of failed indicator names).
     """
     codes = []
     seen = set()

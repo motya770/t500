@@ -213,12 +213,12 @@ def _download_oil_data():
     col1, col2 = st.columns(2)
     with col1:
         start_year = st.number_input(
-            "Start year", min_value=1970, max_value=2023, value=2000,
+            "Start year", min_value=1970, max_value=2025, value=2000,
             key="oil_dl_start",
         )
     with col2:
         end_year = st.number_input(
-            "End year", min_value=1970, max_value=2023, value=2023,
+            "End year", min_value=1970, max_value=2025, value=2025,
             key="oil_dl_end",
         )
 
@@ -248,7 +248,7 @@ def _download_oil_data():
             status.text(f"Downloading {i + 1}/{total}: {label}")
 
         with st.spinner("Downloading oil data from World Bank..."):
-            df = download_oil_data(
+            df, failed_indicators = download_oil_data(
                 country_list,
                 int(start_year),
                 int(end_year),
@@ -258,6 +258,13 @@ def _download_oil_data():
 
         progress.progress(1.0)
         status.text("Download complete!")
+
+        if failed_indicators:
+            st.warning(
+                f"**{len(failed_indicators)} indicator(s) failed to download** "
+                f"(API errors) and were skipped:\n"
+                + "\n".join(f"- {name}" for name in failed_indicators)
+            )
 
         if df is not None and not df.empty:
             save_dataset(df, dataset_name)

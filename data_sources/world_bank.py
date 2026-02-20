@@ -128,7 +128,7 @@ def download_indicator(
     indicator_code: str,
     countries: list[str],
     start_year: int = 2000,
-    end_year: int = 2023,
+    end_year: int = 2025,
 ) -> pd.DataFrame:
     """Download a single indicator for given countries and year range.
 
@@ -169,22 +169,31 @@ def download_multiple_indicators(
     indicator_codes: list[str],
     countries: list[str],
     start_year: int = 2000,
-    end_year: int = 2023,
+    end_year: int = 2025,
     progress_callback=None,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[str]]:
     """Download multiple indicators and merge into a wide-format DataFrame.
 
-    Returns DataFrame with columns: country, year, <indicator1>, <indicator2>, ...
+    Returns a tuple of (DataFrame, failed_indicators) where:
+    - DataFrame has columns: country, year, <indicator1>, <indicator2>, ...
+    - failed_indicators is a list of human-readable names that failed to download.
+    Individual indicator failures are skipped so the rest of the download succeeds.
     """
     all_indicators = get_all_indicators()
     merged = None
+    failed = []
 
     for i, code in enumerate(indicator_codes):
         if progress_callback:
             label = all_indicators.get(code, code)
             progress_callback(i, len(indicator_codes), label)
 
-        df = download_indicator(code, countries, start_year, end_year)
+        try:
+            df = download_indicator(code, countries, start_year, end_year)
+        except RuntimeError:
+            failed.append(all_indicators.get(code, code))
+            continue
+
         if df.empty:
             continue
 
@@ -196,10 +205,14 @@ def download_multiple_indicators(
             merged = merged.merge(df, on=["country", "year"], how="outer")
 
     if merged is None:
-        return pd.DataFrame()
+        if failed:
+            raise RuntimeError(
+                f"All indicators failed to download: {', '.join(failed)}"
+            )
+        return pd.DataFrame(), failed
 
     merged = merged.sort_values(["country", "year"]).reset_index(drop=True)
-    return merged
+    return merged, failed
 
 
 def save_dataset(df: pd.DataFrame, name: str) -> Path:

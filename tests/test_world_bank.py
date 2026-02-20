@@ -188,7 +188,7 @@ class TestDownloadMultipleIndicators:
         })
         mock_download.side_effect = [df1, df2]
 
-        result = download_multiple_indicators(
+        result, failed = download_multiple_indicators(
             ["NY.GDP.MKTP.CD", "FP.CPI.TOTL.ZG"],
             ["USA"],
             2020,
@@ -196,6 +196,7 @@ class TestDownloadMultipleIndicators:
         )
 
         assert isinstance(result, pd.DataFrame)
+        assert failed == []
         assert "country" in result.columns
         assert "year" in result.columns
         assert "NY.GDP.MKTP.CD" in result.columns
@@ -213,15 +214,17 @@ class TestDownloadMultipleIndicators:
             pd.DataFrame(columns=["country", "year", "value"]),
         ]
 
-        result = download_multiple_indicators(["IND1", "IND2"], ["USA"], 2020, 2020)
+        result, failed = download_multiple_indicators(["IND1", "IND2"], ["USA"], 2020, 2020)
         assert "IND1" in result.columns
+        assert failed == []
 
     @patch("data_sources.world_bank.download_indicator")
     def test_all_empty_returns_empty(self, mock_download):
         mock_download.return_value = pd.DataFrame(columns=["country", "year", "value"])
 
-        result = download_multiple_indicators(["IND1"], ["USA"], 2020, 2020)
+        result, failed = download_multiple_indicators(["IND1"], ["USA"], 2020, 2020)
         assert result.empty
+        assert failed == []
 
     @patch("data_sources.world_bank.download_indicator")
     def test_progress_callback(self, mock_download):
@@ -236,6 +239,29 @@ class TestDownloadMultipleIndicators:
         download_multiple_indicators(["IND1", "IND2"], ["USA"], 2020, 2020, progress_callback=callback)
 
         assert callback.call_count == 2
+
+    @patch("data_sources.world_bank.download_indicator")
+    def test_skips_failed_indicators(self, mock_download):
+        """Failed indicators are skipped and reported, not fatal."""
+        df1 = pd.DataFrame({
+            "country": ["USA"],
+            "year": [2020],
+            "value": [100.0],
+        })
+        mock_download.side_effect = [
+            df1,
+            RuntimeError("API error"),
+        ]
+
+        result, failed = download_multiple_indicators(
+            ["NY.GDP.MKTP.CD", "GC.BAL.CASH.GD.ZS"],
+            ["USA"],
+            2020,
+            2020,
+        )
+
+        assert "NY.GDP.MKTP.CD" in result.columns
+        assert len(failed) == 1
 
 
 class TestDataPersistence:

@@ -176,9 +176,9 @@ def _download_cargo_data():
     # Year range
     col1, col2 = st.columns(2)
     with col1:
-        start_year = st.number_input("Start year", min_value=1970, max_value=2023, value=2000, key="cargo_dl_start")
+        start_year = st.number_input("Start year", min_value=1970, max_value=2025, value=2000, key="cargo_dl_start")
     with col2:
-        end_year = st.number_input("End year", min_value=1970, max_value=2023, value=2023, key="cargo_dl_end")
+        end_year = st.number_input("End year", min_value=1970, max_value=2025, value=2025, key="cargo_dl_end")
 
     # Indicator selection
     cargo_indicators = INDICATOR_CATEGORIES.get("Air Transport & Cargo", {})
@@ -209,7 +209,7 @@ def _download_cargo_data():
             status.text(f"Downloading {i+1}/{total}: {label}")
 
         with st.spinner("Downloading data from World Bank..."):
-            df = download_multiple_indicators(
+            df, failed_indicators = download_multiple_indicators(
                 indicators_to_download,
                 country_list,
                 int(start_year),
@@ -219,6 +219,13 @@ def _download_cargo_data():
 
         progress.progress(1.0)
         status.text("Download complete!")
+
+        if failed_indicators:
+            st.warning(
+                f"**{len(failed_indicators)} indicator(s) failed to download** "
+                f"(API errors) and were skipped:\n"
+                + "\n".join(f"- {name}" for name in failed_indicators)
+            )
 
         if df is not None and not df.empty:
             # Save and store in session
