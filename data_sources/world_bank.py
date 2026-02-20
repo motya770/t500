@@ -76,6 +76,15 @@ INDICATOR_CATEGORIES = {
         "SH.DYN.MORT": "Mortality rate, under-5 (per 1,000 live births)",
         "SH.STA.MMRT": "Maternal mortality ratio (per 100,000 live births)",
     },
+    "Air Transport & Cargo": {
+        "IS.AIR.GOOD.MT.K1": "Air transport, freight (million ton-km)",
+        "IS.AIR.PSGR": "Air transport, passengers carried",
+        "IS.AIR.DPRT": "Air transport, registered carrier departures worldwide",
+        "IS.SHP.GOOD.TU": "Container port traffic (TEU: 20 foot equivalent units)",
+        "TG.VAL.TOTL.GD.ZS": "Merchandise trade (% of GDP)",
+        "NE.EXP.GNFS.ZS": "Exports of goods and services (% of GDP)",
+        "NE.IMP.GNFS.ZS": "Imports of goods and services (% of GDP)",
+    },
 }
 
 
