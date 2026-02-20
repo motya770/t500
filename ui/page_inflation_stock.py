@@ -19,9 +19,9 @@ from data_sources.world_bank import (
     INDICATOR_CATEGORIES,
 )
 from data_sources.stock_data import (
+    STOCK_TICKERS,
     download_stock_data,
-    merge_stock_with_economic,
-    STOCK_PRESETS,
+    compute_annual_returns,
 )
 from analysis.inflation_stock_models import (
     run_pytorch_model,
@@ -110,14 +110,14 @@ def render():
         with col_t1:
             ticker = st.selectbox(
                 "Ticker",
-                list(STOCK_PRESETS.keys()),
-                format_func=lambda t: f"{t} — {STOCK_PRESETS[t]}",
+                list(STOCK_TICKERS.keys()),
+                format_func=lambda t: f"{t} — {STOCK_TICKERS[t]}",
                 key="is_ticker",
             )
         with col_t2:
             stock_metric = st.selectbox(
                 "Stock metric to predict",
-                ["annual_return_pct", "avg_price", "end_price", "volatility"],
+                ["annual_return_pct", "avg_close", "volatility"],
                 format_func=lambda m: m.replace("_", " ").title(),
                 key="is_stock_metric",
             )
@@ -127,25 +127,30 @@ def render():
             year_max = int(work_df["year"].max()) if "year" in work_df.columns else 2024
             with st.spinner(f"Downloading {ticker} data …"):
                 try:
-                    stock_df = download_stock_data(ticker, year_min, year_max)
-                    if stock_df.empty:
+                    raw_stock = download_stock_data([ticker], year_min, year_max)
+                    if raw_stock.empty:
                         st.error("No stock data returned. Check the ticker symbol.")
                         return
-                    st.session_state["is_stock_df"] = stock_df
+                    annual_stock = compute_annual_returns(raw_stock)
+                    if annual_stock.empty:
+                        st.error("Could not compute annual returns from stock data.")
+                        return
+                    st.session_state["is_stock_annual"] = annual_stock
                     st.session_state["is_stock_ticker"] = ticker
-                    st.success(f"Downloaded {len(stock_df)} years of {ticker} data.")
+                    st.success(f"Downloaded {len(annual_stock)} years of {ticker} data.")
                 except Exception as exc:
                     st.error(f"Failed to download stock data: {exc}")
                     return
 
-        if "is_stock_df" in st.session_state:
-            stock_df = st.session_state["is_stock_df"]
-            stock_col_name = f"{st.session_state.get('is_stock_ticker', 'stock')}_{stock_metric}"
-            work_df = merge_stock_with_economic(
-                stock_df, work_df,
-                stock_col=stock_metric,
-                stock_col_name=stock_col_name,
+        if "is_stock_annual" in st.session_state:
+            annual_stock = st.session_state["is_stock_annual"]
+            cur_ticker = st.session_state.get("is_stock_ticker", "stock")
+            stock_col_name = f"{cur_ticker}_{stock_metric}"
+            # Pick single-ticker annual data and merge on year
+            ticker_annual = annual_stock[annual_stock["ticker"] == cur_ticker][["year", stock_metric]].rename(
+                columns={stock_metric: stock_col_name},
             )
+            work_df = work_df.merge(ticker_annual, on="year", how="inner")
             st.write(f"Merged data: **{len(work_df)} rows**")
             with st.expander("Preview merged data"):
                 st.dataframe(work_df.head(20), use_container_width=True)
