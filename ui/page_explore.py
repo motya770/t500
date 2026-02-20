@@ -6,6 +6,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from data_sources.world_bank import list_saved_datasets, load_dataset, get_all_indicators
+from ui.theme import apply_steam_style, CHART_COLORS, HEATMAP_SCALE, BRASS, CREAM, EMBER
 
 
 def _get_indicator_label(code: str) -> str:
@@ -23,7 +24,7 @@ def _indicator_columns(df: pd.DataFrame) -> list[str]:
 
 
 def render():
-    st.header("Explore & Visualize Data")
+    st.header("\U0001F50D Explore & Visualize Data")
 
     # --- Load dataset ---
     datasets = list_saved_datasets()
@@ -65,7 +66,7 @@ def render():
         st.dataframe(df.describe(), use_container_width=True)
 
     # --- Visualization type ---
-    st.subheader("Visualizations")
+    st.subheader("\U0001F4CA Visualizations")
     viz_type = st.selectbox(
         "Chart type",
         [
@@ -121,8 +122,10 @@ def _render_time_series(df, indicators, countries):
         color="country",
         title=_get_indicator_label(indicator),
         labels={indicator: _get_indicator_label(indicator), "year": "Year"},
+        color_discrete_sequence=CHART_COLORS,
     )
     fig.update_layout(hovermode="x unified")
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -154,8 +157,9 @@ def _render_country_comparison(df, indicators, countries):
         title=f"{_get_indicator_label(indicator)} ({year})",
         labels={indicator: _get_indicator_label(indicator)},
         color=indicator,
-        color_continuous_scale="Viridis",
+        color_continuous_scale=HEATMAP_SCALE,
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -191,7 +195,9 @@ def _render_scatter(df, indicators, countries):
             y_ind: _get_indicator_label(y_ind),
         },
         trendline="ols",
+        color_discrete_sequence=CHART_COLORS,
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -213,7 +219,9 @@ def _render_distribution(df, indicators):
         title=f"Distribution: {_get_indicator_label(indicator)}",
         labels={"value": _get_indicator_label(indicator)},
         marginal="box",
+        color_discrete_sequence=[BRASS],
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     col1, col2, col3 = st.columns(3)
@@ -240,8 +248,9 @@ def _render_heatmap(df, indicators, countries):
         title=f"{_get_indicator_label(indicator)} by Country & Year",
         labels={"color": _get_indicator_label(indicator)},
         aspect="auto",
-        color_continuous_scale="RdYlBu_r",
+        color_continuous_scale=HEATMAP_SCALE,
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -264,5 +273,7 @@ def _render_boxplot(df, indicators, countries):
         y=indicator,
         title=f"{_get_indicator_label(indicator)} by Country",
         labels={indicator: _get_indicator_label(indicator)},
+        color_discrete_sequence=[BRASS],
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)

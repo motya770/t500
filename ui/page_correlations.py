@@ -20,6 +20,10 @@ from analysis.correlations import (
     granger_causality_test,
     get_top_correlations,
 )
+from ui.theme import (
+    apply_steam_style, CHART_COLORS, DIVERGING_SCALE, HEATMAP_SCALE,
+    BRASS, COPPER, CREAM, EMBER, COAL, DARK_IRON, DARK_WOOD, BRONZE,
+)
 
 
 def _get_indicator_label(code: str) -> str:
@@ -47,7 +51,7 @@ def _prepare_analysis_data(df: pd.DataFrame, mode: str, country: str = None) -> 
 
 
 def render():
-    st.header("Correlation & ML Analysis")
+    st.header("\U0001F517 Correlation & ML Analysis")
 
     # --- Load data ---
     datasets = list_saved_datasets()
@@ -78,7 +82,7 @@ def render():
         return
 
     # --- Data preparation ---
-    st.subheader("Data Preparation")
+    st.subheader("\U00002699\uFE0F Data Preparation")
     countries = sorted(df["country"].unique()) if "country" in df.columns else []
 
     col1, col2 = st.columns(2)
@@ -107,7 +111,7 @@ def render():
     else:
         analysis_df = analysis_df.dropna()
 
-    st.write(f"Analysis data: **{len(analysis_df)} rows** × **{len(indicators)} indicators**")
+    st.write(f"Analysis data: **{len(analysis_df)} rows** \u00d7 **{len(indicators)} indicators**")
 
     if len(analysis_df) < 5:
         st.error("Not enough data after filtering. Try a different aggregation mode or handle missing values differently.")
@@ -115,7 +119,7 @@ def render():
 
     # --- Analysis method selection ---
     st.divider()
-    st.subheader("Analysis Methods")
+    st.subheader("\U0001F52C Analysis Methods")
 
     method = st.selectbox(
         "Choose analysis method",
@@ -136,7 +140,7 @@ def render():
         ],
     )
 
-    if st.button("Run Analysis", type="primary", use_container_width=True):
+    if st.button("\U0001F682 Run Analysis", type="primary", use_container_width=True):
         _run_analysis(analysis_df, method, indicators, df, countries)
 
 
@@ -179,11 +183,11 @@ def _render_correlation_heatmap(matrix: pd.DataFrame, title: str):
         z=matrix.values,
         x=labels,
         y=labels,
-        colorscale="RdBu_r",
+        colorscale=DIVERGING_SCALE,
         zmid=0,
         text=np.round(matrix.values, 3),
         texttemplate="%{text}",
-        textfont={"size": 10},
+        textfont={"size": 10, "color": CREAM},
         hovertemplate="Row: %{y}<br>Col: %{x}<br>Value: %{z:.4f}<extra></extra>",
     ))
     fig.update_layout(
@@ -192,6 +196,7 @@ def _render_correlation_heatmap(matrix: pd.DataFrame, title: str):
         height=700,
         xaxis_tickangle=-45,
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -303,14 +308,18 @@ def _run_pca(df):
         x=var_df["Component"],
         y=var_df["Explained Variance (%)"],
         name="Individual",
+        marker_color=BRASS,
     )
     fig.add_scatter(
         x=var_df["Component"],
         y=var_df["Cumulative (%)"],
         name="Cumulative",
         mode="lines+markers",
+        marker_color=EMBER,
+        line_color=EMBER,
     )
     fig.update_layout(title="PCA Explained Variance", yaxis_title="%")
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # Loadings
@@ -322,9 +331,10 @@ def _run_pca(df):
     fig = px.imshow(
         loadings.iloc[:, :n_show],
         title="PCA Loadings (Top Components)",
-        color_continuous_scale="RdBu_r",
+        color_continuous_scale=DIVERGING_SCALE,
         aspect="auto",
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # 2D scatter
@@ -336,7 +346,9 @@ def _run_pca(df):
             x="PC1",
             y="PC2",
             title="Data in PC1 vs PC2 Space",
+            color_discrete_sequence=[BRASS],
         )
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -380,7 +392,9 @@ def _run_autoencoder(df):
         y=result["training_losses"],
         labels={"x": "Epoch", "y": "Loss"},
         title="Autoencoder Training Loss",
+        color_discrete_sequence=[EMBER],
     )
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     # Reconstruction errors
@@ -392,8 +406,10 @@ def _run_autoencoder(df):
         y=errors.values,
         title="Per-Indicator Reconstruction Error",
         labels={"x": "Indicator", "y": "Mean Squared Error"},
+        color_discrete_sequence=[BRASS],
     )
     fig.update_layout(xaxis_tickangle=-45)
+    apply_steam_style(fig)
     st.plotly_chart(fig, use_container_width=True)
 
     st.info("Higher reconstruction error = the indicator is harder to predict from other indicators = more independent/unique information.")
@@ -437,7 +453,7 @@ def _run_granger(full_df, indicators, countries):
             st.error(result["error"])
             return
 
-        st.subheader(f"Results: {_get_indicator_label(x_col)} → {_get_indicator_label(y_col)}")
+        st.subheader(f"Results: {_get_indicator_label(x_col)} \u2192 {_get_indicator_label(y_col)}")
 
         if result["lag_results"]:
             rows = []
@@ -481,22 +497,26 @@ def _run_cv_scores(df, indicators):
 
         st.subheader("Cross-Validation Results")
         col1, col2, col3 = st.columns(3)
-        col1.metric("Mean R²", f"{result['r2_mean']:.4f}")
-        col2.metric("Std R²", f"±{result['r2_std']:.4f}")
+        col1.metric("Mean R\u00b2", f"{result['r2_mean']:.4f}")
+        col2.metric("Std R\u00b2", f"\u00b1{result['r2_std']:.4f}")
         col3.metric("Samples", result['n_samples'])
 
         fig = px.bar(
             x=[f"Fold {i+1}" for i in range(len(result['r2_scores']))],
             y=result['r2_scores'],
-            title=f"R² Scores per Fold ({model_type.replace('_', ' ').title()})",
-            labels={"x": "Fold", "y": "R² Score"},
+            title=f"R\u00b2 Scores per Fold ({model_type.replace('_', ' ').title()})",
+            labels={"x": "Fold", "y": "R\u00b2 Score"},
+            color_discrete_sequence=[BRASS],
         )
-        fig.add_hline(y=result['r2_mean'], line_dash="dash", annotation_text=f"Mean: {result['r2_mean']:.4f}")
+        fig.add_hline(y=result['r2_mean'], line_dash="dash", line_color=EMBER,
+                       annotation_text=f"Mean: {result['r2_mean']:.4f}",
+                       annotation_font_color=CREAM)
+        apply_steam_style(fig)
         st.plotly_chart(fig, use_container_width=True)
 
         if result['r2_mean'] > 0.7:
-            st.success(f"Good predictability (R² = {result['r2_mean']:.3f}). Other indicators strongly predict **{_get_indicator_label(target)}**.")
+            st.success(f"Good predictability (R\u00b2 = {result['r2_mean']:.3f}). Other indicators strongly predict **{_get_indicator_label(target)}**.")
         elif result['r2_mean'] > 0.3:
-            st.info(f"Moderate predictability (R² = {result['r2_mean']:.3f}).")
+            st.info(f"Moderate predictability (R\u00b2 = {result['r2_mean']:.3f}).")
         else:
-            st.warning(f"Low predictability (R² = {result['r2_mean']:.3f}). This indicator may be largely independent of the others.")
+            st.warning(f"Low predictability (R\u00b2 = {result['r2_mean']:.3f}). This indicator may be largely independent of the others.")
