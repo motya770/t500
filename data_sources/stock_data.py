@@ -9,6 +9,8 @@ import yfinance as yf
 import pandas as pd
 from pathlib import Path
 
+from data_sources.database import save_dataset_smart, load_dataset_smart
+
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 # Predefined tickers of interest
@@ -200,16 +202,19 @@ def merge_stock_with_economic(
 
 
 def save_stock_dataset(df: pd.DataFrame, name: str) -> Path:
-    """Save stock dataset to the data directory as CSV."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = DATA_DIR / f"{name}.csv"
-    df.to_csv(path, index=False)
-    return path
+    """Save stock dataset to the SQLite database."""
+    save_dataset_smart(df, name)
+    return DATA_DIR / f"{name}.db"
 
 
 def load_stock_dataset(name: str) -> pd.DataFrame:
-    """Load a stock dataset from the data directory."""
-    path = DATA_DIR / f"{name}.csv"
-    if not path.exists():
-        raise FileNotFoundError(f"Stock dataset '{name}' not found at {path}")
-    return pd.read_csv(path)
+    """Load a stock dataset from the database, with CSV fallback."""
+    try:
+        return load_dataset_smart(name)
+    except FileNotFoundError:
+        csv_path = DATA_DIR / f"{name}.csv"
+        if csv_path.exists():
+            return pd.read_csv(csv_path)
+        raise FileNotFoundError(
+            f"Stock dataset '{name}' not found in database or CSV files"
+        )

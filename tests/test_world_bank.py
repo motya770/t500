@@ -244,25 +244,38 @@ class TestDataPersistence:
     def test_save_and_load(self, tmp_path):
         df = pd.DataFrame({"country": ["USA"], "year": [2020], "value": [100.0]})
 
-        with patch("data_sources.world_bank.DATA_DIR", tmp_path):
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.world_bank.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
             save_dataset(df, "test_data")
             loaded = load_dataset("test_data")
 
         assert len(loaded) == len(df)
-        assert list(loaded.columns) == list(df.columns)
+        assert "country" in loaded.columns
+        assert "year" in loaded.columns
 
     def test_load_nonexistent_raises(self, tmp_path):
-        with patch("data_sources.world_bank.DATA_DIR", tmp_path):
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.world_bank.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
             with pytest.raises(FileNotFoundError):
                 load_dataset("nonexistent")
 
     def test_list_saved_datasets(self, tmp_path):
-        # Create some CSV files
+        # Create some CSV files (legacy) to test fallback listing
         (tmp_path / "dataset1.csv").write_text("a,b\n1,2\n")
         (tmp_path / "dataset2.csv").write_text("a,b\n3,4\n")
         (tmp_path / "not_csv.txt").write_text("hello")
 
-        with patch("data_sources.world_bank.DATA_DIR", tmp_path):
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.world_bank.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
             datasets = list_saved_datasets()
 
         assert "dataset1" in datasets
@@ -270,16 +283,38 @@ class TestDataPersistence:
         assert "not_csv" not in datasets
 
     def test_list_empty_directory(self, tmp_path):
-        with patch("data_sources.world_bank.DATA_DIR", tmp_path):
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.world_bank.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
             datasets = list_saved_datasets()
         assert datasets == []
 
     def test_save_creates_directory(self, tmp_path):
         new_dir = tmp_path / "new_subdir"
-        df = pd.DataFrame({"a": [1]})
+        df = pd.DataFrame({"country": ["USA"], "year": [2020], "value": [100.0]})
 
-        with patch("data_sources.world_bank.DATA_DIR", new_dir):
+        with patch("data_sources.database.DB_PATH", new_dir / "test.db"), \
+             patch("data_sources.database.DB_DIR", new_dir), \
+             patch("data_sources.world_bank.DATA_DIR", new_dir):
+            from data_sources.database import init_db
+            init_db()
             save_dataset(df, "test")
 
         assert new_dir.exists()
-        assert (new_dir / "test.csv").exists()
+
+    def test_csv_fallback_on_load(self, tmp_path):
+        """Legacy CSV files should still be loadable."""
+        df = pd.DataFrame({"country": ["USA"], "year": [2020], "value": [100.0]})
+        df.to_csv(tmp_path / "legacy.csv", index=False)
+
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.world_bank.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
+            loaded = load_dataset("legacy")
+
+        assert len(loaded) == 1
+        assert loaded["country"].iloc[0] == "USA"

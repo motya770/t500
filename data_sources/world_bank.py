@@ -7,6 +7,12 @@ import wbgapi as wb
 import pandas as pd
 from pathlib import Path
 
+from data_sources.database import (
+    save_dataset_smart,
+    load_dataset_smart,
+    list_datasets,
+)
+
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 # Common economic indicators grouped by category
@@ -200,22 +206,26 @@ def download_multiple_indicators(
 
 
 def save_dataset(df: pd.DataFrame, name: str) -> Path:
-    """Save a dataset to the data directory as CSV."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = DATA_DIR / f"{name}.csv"
-    df.to_csv(path, index=False)
-    return path
+    """Save a dataset to the SQLite database."""
+    save_dataset_smart(df, name)
+    return DATA_DIR / f"{name}.db"
 
 
 def load_dataset(name: str) -> pd.DataFrame:
-    """Load a dataset from the data directory."""
-    path = DATA_DIR / f"{name}.csv"
-    if not path.exists():
-        raise FileNotFoundError(f"Dataset '{name}' not found at {path}")
-    return pd.read_csv(path)
+    """Load a dataset from the database, with CSV fallback for migration."""
+    try:
+        return load_dataset_smart(name)
+    except FileNotFoundError:
+        # Fallback: try legacy CSV
+        csv_path = DATA_DIR / f"{name}.csv"
+        if csv_path.exists():
+            return pd.read_csv(csv_path)
+        raise FileNotFoundError(f"Dataset '{name}' not found in database or CSV files")
 
 
 def list_saved_datasets() -> list[str]:
-    """List all saved datasets in the data directory."""
+    """List all saved datasets from both database and legacy CSV files."""
+    db_names = set(list_datasets())
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    return [p.stem for p in DATA_DIR.glob("*.csv")]
+    csv_names = {p.stem for p in DATA_DIR.glob("*.csv")}
+    return sorted(db_names | csv_names)
