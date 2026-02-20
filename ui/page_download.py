@@ -21,17 +21,27 @@ def render():
     all_indicators = get_all_indicators()
     selected_codes = []
 
+    # Global select all
+    select_all_global = st.checkbox(
+        f"Select all indicators ({len(all_indicators)} total)",
+        key="select_all_global",
+    )
+
     # Quick select by category
     cols = st.columns(2)
     for idx, (category, indicators) in enumerate(INDICATOR_CATEGORIES.items()):
         col = cols[idx % 2]
         with col:
             with st.expander(f"{category} ({len(indicators)} indicators)"):
-                select_all = st.checkbox(f"Select all {category}", key=f"cat_{category}")
+                select_all = st.checkbox(
+                    f"Select all {category}",
+                    value=select_all_global,
+                    key=f"cat_{category}",
+                )
                 for code, name in indicators.items():
                     checked = st.checkbox(
                         f"{name}",
-                        value=select_all,
+                        value=select_all or select_all_global,
                         key=f"ind_{code}",
                         help=f"Code: {code}",
                     )
