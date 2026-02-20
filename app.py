@@ -18,12 +18,14 @@ st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "Navigation",
-    ["Download Data", "Explore & Visualize", "Correlation Analysis"],
+    ["Download Data", "Stock / ETF Data", "Explore & Visualize", "Correlation Analysis"],
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    "**Data source:** [World Bank Open Data](https://data.worldbank.org/)\n\n"
+    "**Data sources:**\n"
+    "- [World Bank Open Data](https://data.worldbank.org/)\n"
+    "- [Yahoo Finance](https://finance.yahoo.com/) (Stock/ETF data)\n\n"
     "**Methods:** Pearson, Spearman, Kendall, Partial Correlation, "
     "Mutual Information, Random Forest, Gradient Boosting, Lasso, "
     "Elastic Net, PCA, Autoencoder, Granger Causality"
@@ -32,6 +34,9 @@ st.sidebar.markdown(
 # Route to pages
 if page == "Download Data":
     from ui.page_download import render
+    render()
+elif page == "Stock / ETF Data":
+    from ui.page_stock_download import render
     render()
 elif page == "Explore & Visualize":
     from ui.page_explore import render
