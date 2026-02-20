@@ -18,7 +18,8 @@ st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "Navigation",
-    ["Download Data", "Explore & Visualize", "Correlation Analysis"],
+    ["Download Data", "Explore & Visualize", "Correlation Analysis",
+     "News Sentiment"],
 )
 
 st.sidebar.markdown("---")
@@ -26,7 +27,9 @@ st.sidebar.markdown(
     "**Data source:** [World Bank Open Data](https://data.worldbank.org/)\n\n"
     "**Methods:** Pearson, Spearman, Kendall, Partial Correlation, "
     "Mutual Information, Random Forest, Gradient Boosting, Lasso, "
-    "Elastic Net, PCA, Autoencoder, Granger Causality"
+    "Elastic Net, PCA, Autoencoder, Granger Causality\n\n"
+    "**News Sentiment:** Financial news analysis via RSS feeds "
+    "with TextBlob + financial lexicon scoring"
 )
 
 # Route to pages
@@ -38,4 +41,7 @@ elif page == "Explore & Visualize":
     render()
 elif page == "Correlation Analysis":
     from ui.page_correlations import render
+    render()
+elif page == "News Sentiment":
+    from ui.page_news_sentiment import render
     render()
