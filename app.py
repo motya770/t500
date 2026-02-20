@@ -18,15 +18,17 @@ st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "Navigation",
-    ["Download Data", "Explore & Visualize", "Correlation Analysis"],
+    ["Download Data", "Explore & Visualize", "Correlation Analysis", "Inflation-Stock Models"],
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     "**Data source:** [World Bank Open Data](https://data.worldbank.org/)\n\n"
-    "**Methods:** Pearson, Spearman, Kendall, Partial Correlation, "
-    "Mutual Information, Random Forest, Gradient Boosting, Lasso, "
-    "Elastic Net, PCA, Autoencoder, Granger Causality"
+    "**Correlation methods:** Pearson, Spearman, Kendall, Partial, "
+    "Mutual Information, RF, GB, Lasso, Elastic Net, PCA, Autoencoder, "
+    "Granger Causality\n\n"
+    "**Inflation-Stock models:** LSTM, GRU, Transformer, TCN, "
+    "Regime Switching, Gradient Boosting, AdaBoost, Hist Gradient Boosting"
 )
 
 # Route to pages
@@ -38,4 +40,7 @@ elif page == "Explore & Visualize":
     render()
 elif page == "Correlation Analysis":
     from ui.page_correlations import render
+    render()
+elif page == "Inflation-Stock Models":
+    from ui.page_inflation_stock import render
     render()
