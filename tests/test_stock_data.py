@@ -243,28 +243,71 @@ class TestStockDataPersistence:
     def test_save_and_load(self, tmp_path):
         df = pd.DataFrame({
             "ticker": ["VOO"],
-            "date": ["2020-01-01"],
+            "date": pd.to_datetime(["2020-01-01"]),
+            "year": [2020],
+            "month": [1],
+            "open": [295.0],
+            "high": [310.0],
+            "low": [290.0],
             "close": [300.0],
+            "volume": [1000000],
         })
 
-        with patch("data_sources.stock_data.DATA_DIR", tmp_path):
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.stock_data.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
             save_stock_dataset(df, "test_stock")
             loaded = load_stock_dataset("test_stock")
 
         assert len(loaded) == len(df)
         assert "ticker" in loaded.columns
+        assert loaded["close"].iloc[0] == pytest.approx(300.0)
 
     def test_load_nonexistent_raises(self, tmp_path):
-        with patch("data_sources.stock_data.DATA_DIR", tmp_path):
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.stock_data.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
             with pytest.raises(FileNotFoundError):
                 load_stock_dataset("nonexistent")
 
     def test_save_creates_directory(self, tmp_path):
         new_dir = tmp_path / "new_subdir"
-        df = pd.DataFrame({"a": [1]})
+        df = pd.DataFrame({
+            "ticker": ["VOO"],
+            "date": pd.to_datetime(["2020-01-01"]),
+            "year": [2020],
+            "month": [1],
+            "close": [300.0],
+        })
 
-        with patch("data_sources.stock_data.DATA_DIR", new_dir):
+        with patch("data_sources.database.DB_PATH", new_dir / "test.db"), \
+             patch("data_sources.database.DB_DIR", new_dir), \
+             patch("data_sources.stock_data.DATA_DIR", new_dir):
+            from data_sources.database import init_db
+            init_db()
             save_stock_dataset(df, "test")
 
         assert new_dir.exists()
-        assert (new_dir / "test.csv").exists()
+
+    def test_csv_fallback_on_load(self, tmp_path):
+        """Legacy CSV files should still be loadable."""
+        df = pd.DataFrame({
+            "ticker": ["VOO"],
+            "date": ["2020-01-01"],
+            "close": [300.0],
+        })
+        df.to_csv(tmp_path / "legacy_stock.csv", index=False)
+
+        with patch("data_sources.database.DB_PATH", tmp_path / "test.db"), \
+             patch("data_sources.database.DB_DIR", tmp_path), \
+             patch("data_sources.stock_data.DATA_DIR", tmp_path):
+            from data_sources.database import init_db
+            init_db()
+            loaded = load_stock_dataset("legacy_stock")
+
+        assert len(loaded) == 1
+        assert loaded["ticker"].iloc[0] == "VOO"

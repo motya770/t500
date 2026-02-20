@@ -4,6 +4,9 @@ Run with: streamlit run app.py
 """
 
 import streamlit as st
+from data_sources.database import init_db
+
+init_db()
 
 st.set_page_config(
     page_title="Econ Express - Steam Train Dashboard",
