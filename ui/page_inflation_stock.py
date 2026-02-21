@@ -164,11 +164,11 @@ def render():
 
     col_a, col_b = st.columns(2)
     with col_a:
-        default_target = stock_col_name if stock_col_name and stock_col_name in available_cols else available_cols[-1]
+        default_idx = available_cols.index(stock_col_name) if stock_col_name and stock_col_name in available_cols else len(available_cols) - 1
         target_col = st.selectbox(
             "Target variable (Y)",
             available_cols,
-            index=available_cols.index(default_target) if default_target in available_cols else 0,
+            index=default_idx,
             format_func=lambda c: _get_indicator_label(c) if c in get_all_indicators() else c,
             key="is_target",
         )
@@ -388,11 +388,18 @@ def _render_results(result: dict, target_col: str, feature_cols: list[str], is_p
     fig.add_scatter(x=pred_df["Year"], y=pred_df["Actual"], mode="lines+markers", name="Actual")
     fig.add_scatter(x=pred_df["Year"], y=pred_df["Predicted"], mode="lines+markers", name="Predicted")
 
-    if is_pytorch and "train_size" in preds:
-        split_year = pred_df["Year"].iloc[preds["train_size"]] if preds["train_size"] < len(pred_df) else None
-        if split_year is not None:
+    if "train_size" in preds:
+        train_size = preds["train_size"]
+        if train_size < len(pred_df):
+            split_year = pred_df["Year"].iloc[train_size]
+            label = "Train / Val" if is_pytorch else "Train / Test"
             fig.add_vline(x=split_year, line_dash="dash", line_color="gray",
-                          annotation_text="Train / Val split")
+                          annotation_text=label)
+    if is_pytorch and "val_size" in preds:
+        val_end = preds["train_size"] + preds["val_size"]
+        if val_end < len(pred_df):
+            fig.add_vline(x=pred_df["Year"].iloc[val_end], line_dash="dash",
+                          line_color="orange", annotation_text="Val / Test")
 
     fig.update_layout(
         title=f"Predicted vs Actual — {target_label}",

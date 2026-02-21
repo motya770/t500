@@ -3,6 +3,9 @@
 Run with: streamlit run app.py
 """
 
+import logging
+logging.getLogger("torch.classes").setLevel(logging.ERROR)
+
 import streamlit as st
 from streamlit_option_menu import option_menu
 from data_sources.database import init_db
@@ -31,23 +34,23 @@ with st.sidebar:
     page_name = option_menu(
         menu_title=None,
         options=[
-            "Download Data",
+            "Macro Data",
+            "Cargo Plane Data",
+            "Oil Tanker Data",
             "Stock / ETF Data",
             "Explore & Visualize",
             "Correlation Analysis",
             "Inflation-Stock Models",
-            "Cargo Plane Analysis",
-            "Oil Tanker Analysis",
             "News Sentiment",
         ],
         icons=[
             "cloud-download",
+            "airplane",
+            "droplet-half",
             "graph-up-arrow",
             "bar-chart-line",
             "diagram-3",
             "currency-exchange",
-            "airplane",
-            "droplet-half",
             "newspaper",
         ],
         default_index=0,
@@ -88,7 +91,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown(SIDEBAR_FOOTER, unsafe_allow_html=True)
 
 # Route to pages
-if page_name == "Download Data":
+if page_name == "Macro Data":
     from ui.page_download import render
     render()
 elif page_name == "Stock / ETF Data":
@@ -103,10 +106,10 @@ elif page_name == "Correlation Analysis":
 elif page_name == "Inflation-Stock Models":
     from ui.page_inflation_stock import render
     render()
-elif page_name == "Cargo Plane Analysis":
+elif page_name == "Cargo Plane Data":
     from ui.page_cargo import render
     render()
-elif page_name == "Oil Tanker Analysis":
+elif page_name == "Oil Tanker Data":
     from ui.page_oil_tankers import render
     render()
 elif page_name == "News Sentiment":

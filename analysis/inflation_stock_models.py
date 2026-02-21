@@ -413,10 +413,10 @@ def run_pytorch_model(
     all_cols = list(feature_cols) + [target_col]
     data = df[all_cols].dropna()
 
-    if len(data) < seq_length + 5:
+    if len(data) < seq_length + 4:
         return {
             "error": (
-                f"Not enough data. Need at least {seq_length + 5} rows, "
+                f"Not enough data. Need at least {seq_length + 4} rows, "
                 f"got {len(data)}."
             )
         }
@@ -435,10 +435,12 @@ def run_pytorch_model(
     if len(X_seq) < 4:
         return {"error": "Not enough sequences. Try a shorter sequence length."}
 
-    # ---- train / val split ----
-    split = max(2, int(len(X_seq) * 0.8))
-    X_train, X_val = X_seq[:split], X_seq[split:]
-    y_train, y_val = y_seq[:split], y_seq[split:]
+    # ---- train / val / test split (70 / 15 / 15) ----
+    n = len(X_seq)
+    train_end = max(2, int(n * 0.70))
+    val_end = max(train_end + 1, int(n * 0.85))
+    X_train, X_val, X_test = X_seq[:train_end], X_seq[train_end:val_end], X_seq[val_end:]
+    y_train, y_val, y_test = y_seq[:train_end], y_seq[train_end:val_end], y_seq[val_end:]
 
     input_dim = X_seq.shape[2]
 
@@ -475,6 +477,7 @@ def run_pytorch_model(
     with torch.no_grad():
         train_pred = model(X_train).numpy()
         val_pred = model(X_val).numpy()
+        test_pred = model(X_test).numpy() if len(X_test) > 0 else np.array([])
         all_pred = model(X_seq).numpy()
 
     inv = lambda a: scaler_y.inverse_transform(a.reshape(-1, 1)).ravel()
@@ -494,6 +497,12 @@ def run_pytorch_model(
         metrics["val_r2"] = float(r2_score(y_val_orig, val_pred_orig))
         metrics["val_mse"] = float(mean_squared_error(y_val_orig, val_pred_orig))
         metrics["val_mae"] = float(mean_absolute_error(y_val_orig, val_pred_orig))
+    if len(test_pred) > 1:
+        test_pred_orig = inv(test_pred)
+        y_test_orig = inv(y_test.numpy())
+        metrics["test_r2"] = float(r2_score(y_test_orig, test_pred_orig))
+        metrics["test_mse"] = float(mean_squared_error(y_test_orig, test_pred_orig))
+        metrics["test_mae"] = float(mean_absolute_error(y_test_orig, test_pred_orig))
 
     # year labels for plotting
     data_index = data.index[seq_length:]
@@ -510,7 +519,8 @@ def run_pytorch_model(
             "actual": y_all_orig.tolist(),
             "predicted": all_pred_orig.tolist(),
             "years": years,
-            "train_size": split,
+            "train_size": train_end,
+            "val_size": val_end - train_end,
         },
     }
 
@@ -564,8 +574,16 @@ def run_boosting_model(
             )
         }
 
+    # ---- train / test split (80 / 20) ----
+    n = len(X)
+    test_start = max(2, int(n * 0.80))
+    X_train_all, X_test = X[:test_start], X[test_start:]
+    y_train_all, y_test = y[:test_start], y[test_start:]
+
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    X_train_scaled = scaler.fit_transform(X_train_all)
+    X_test_scaled = scaler.transform(X_test) if len(X_test) > 0 else np.array([]).reshape(0, X_train_all.shape[1])
+    X_all_scaled = scaler.transform(X)
 
     # ---- create model ----
     if model_type == "gradient_boosting":
@@ -592,22 +610,41 @@ def run_boosting_model(
     else:
         return {"error": f"Unknown model type: {model_type}"}
 
-    # ---- time-series CV ----
-    tscv = TimeSeriesSplit(n_splits=min(cv_folds, len(X) - 1))
+    # ---- time-series CV on training data only ----
+    effective_folds = min(cv_folds, len(X_train_all) - 1)
+    tscv = TimeSeriesSplit(n_splits=effective_folds)
     cv_results = []
-    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X_scaled)):
-        model.fit(X_scaled[train_idx], y[train_idx])
-        pred = model.predict(X_scaled[val_idx])
+    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X_train_scaled)):
+        model.fit(X_train_scaled[train_idx], y_train_all[train_idx])
+        pred = model.predict(X_train_scaled[val_idx])
         cv_results.append({
             "fold": fold_idx + 1,
-            "r2": float(r2_score(y[val_idx], pred)) if len(val_idx) > 1 else 0.0,
-            "mse": float(mean_squared_error(y[val_idx], pred)),
-            "mae": float(mean_absolute_error(y[val_idx], pred)),
+            "r2": float(r2_score(y_train_all[val_idx], pred)) if len(val_idx) > 1 else 0.0,
+            "mse": float(mean_squared_error(y_train_all[val_idx], pred)),
+            "mae": float(mean_absolute_error(y_train_all[val_idx], pred)),
         })
 
-    # ---- final fit on all data ----
-    model.fit(X_scaled, y)
-    all_pred = model.predict(X_scaled)
+    # ---- final fit on training data, predict everything ----
+    model.fit(X_train_scaled, y_train_all)
+    train_pred = model.predict(X_train_scaled)
+    all_pred = model.predict(X_all_scaled)
+
+    metrics: dict[str, float] = {
+        "train_r2": float(r2_score(y_train_all, train_pred)) if len(y_train_all) > 1 else 0.0,
+        "train_mse": float(mean_squared_error(y_train_all, train_pred)),
+        "train_mae": float(mean_absolute_error(y_train_all, train_pred)),
+    }
+
+    cv_r2 = [f["r2"] for f in cv_results]
+    cv_mae = [f["mae"] for f in cv_results]
+    metrics["cv_mean_r2"] = float(np.mean(cv_r2))
+    metrics["cv_mean_mae"] = float(np.mean(cv_mae))
+
+    if len(X_test) > 1:
+        test_pred = model.predict(X_test_scaled)
+        metrics["test_r2"] = float(r2_score(y_test, test_pred))
+        metrics["test_mse"] = float(mean_squared_error(y_test, test_pred))
+        metrics["test_mae"] = float(mean_absolute_error(y_test, test_pred))
 
     importances = (
         model.feature_importances_
@@ -629,16 +666,13 @@ def run_boosting_model(
 
     return {
         "model_type": model_type,
-        "metrics": {
-            "r2": float(r2_score(y, all_pred)),
-            "mse": float(mean_squared_error(y, all_pred)),
-            "mae": float(mean_absolute_error(y, all_pred)),
-        },
+        "metrics": metrics,
         "cv_results": cv_results,
         "predictions": {
             "actual": y.tolist(),
             "predicted": all_pred.tolist(),
             "years": years,
+            "train_size": test_start,
         },
         "feature_importances": importance_df.to_dict("records"),
         "feature_names": feature_names,
