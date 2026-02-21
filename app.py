@@ -3,6 +3,9 @@
 Run with: streamlit run app.py
 """
 
+import logging
+logging.getLogger("torch.classes").setLevel(logging.ERROR)
+
 import streamlit as st
 from streamlit_option_menu import option_menu
 from data_sources.database import init_db
