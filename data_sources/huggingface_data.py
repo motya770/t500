@@ -19,7 +19,7 @@ from data_sources.world_bank import (
 )
 
 HF_DATASET_URL = (
-    "hf://datasets/datonic/world_development_indicators/default/train/*.parquet"
+    "hf://datasets/datonic/world_development_indicators/data/world_development_indicators.parquet"
 )
 
 CACHE_DIR = Path(__file__).parent.parent / "data" / "hf_cache"
