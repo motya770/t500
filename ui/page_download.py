@@ -12,7 +12,7 @@ from data_sources.world_bank import (
 
 
 def render():
-    st.header("\U0001F682 Download Economic Data")
+    st.header("Download Economic Data")
 
     data_source = st.radio(
         "Data Source",
@@ -188,7 +188,7 @@ def _render_world_bank_download():
 
     st.write(f"**Summary:** {len(selected_codes)} indicators \u00d7 {len(selected_countries)} countries \u00d7 {end_year - start_year + 1} years")
 
-    if st.button("\U0001F682 Download Data", type="primary", use_container_width=True, key="wb_download"):
+    if st.button("Download Data", type="primary", use_container_width=True, key="wb_download"):
         progress_bar = st.progress(0)
         status_text = st.empty()
 
@@ -341,7 +341,7 @@ def _render_huggingface_download():
 
     st.write(f"**Summary:** {len(selected_codes)} indicators \u00d7 {len(selected_countries)} countries \u00d7 {end_year - start_year + 1} years")
 
-    if st.button("\U0001F682 Load Data", type="primary", use_container_width=True, key="hf_download"):
+    if st.button("Load Data", type="primary", use_container_width=True, key="hf_download"):
         progress_bar = st.progress(0)
         status_text = st.empty()
 

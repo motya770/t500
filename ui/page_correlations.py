@@ -51,7 +51,7 @@ def _prepare_analysis_data(df: pd.DataFrame, mode: str, country: str = None) -> 
 
 
 def render():
-    st.header("\U0001F517 Correlation & ML Analysis")
+    st.header("Correlation & ML Analysis")
 
     # --- Load data ---
     datasets = list_saved_datasets()
@@ -140,7 +140,7 @@ def render():
         ],
     )
 
-    if st.button("\U0001F682 Run Analysis", type="primary", use_container_width=True):
+    if st.button("Run Analysis", type="primary", use_container_width=True):
         _run_analysis(analysis_df, method, indicators, df, countries)
 
 
