@@ -200,7 +200,7 @@ def _download_cargo_data():
 
     dataset_name = st.text_input("Dataset name", value="cargo_analysis", key="cargo_dl_name")
 
-    if st.button("\U0001F682 Download Cargo Data", type="primary", key="cargo_dl_btn"):
+    if st.button("Download Cargo Data", type="primary", key="cargo_dl_btn"):
         progress = st.progress(0)
         status = st.empty()
 
@@ -647,7 +647,7 @@ def _render_growth_drivers(df, cargo_cols):
         key="driver_indicator",
     )
 
-    if st.button("\U0001F682 Identify Growth Drivers", type="primary", key="driver_btn"):
+    if st.button("Identify Growth Drivers", type="primary", key="driver_btn"):
         with st.spinner("Training Random Forest model..."):
             result = compute_cargo_growth_drivers(df, freight_col)
 

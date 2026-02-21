@@ -42,7 +42,7 @@ def render():
         )
     with col2:
         st.markdown("")  # spacer
-        run_btn = st.button("\U0001F682 Fetch & Analyze News", type="primary")
+        run_btn = st.button("Fetch & Analyze News", type="primary")
 
     if run_btn:
         _run_analysis(n_articles)

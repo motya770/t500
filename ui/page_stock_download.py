@@ -85,7 +85,7 @@ def render():
         st.warning("Please select at least one ticker.")
         return
 
-    if st.button("\U0001F682 Download Stock Data", type="primary", use_container_width=True):
+    if st.button("Download Stock Data", type="primary", use_container_width=True):
         with st.spinner(f"Downloading data for {', '.join(selected_tickers)}..."):
             try:
                 df = download_stock_data(

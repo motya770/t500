@@ -9,13 +9,13 @@ from data_sources.database import init_db
 init_db()
 
 st.set_page_config(
-    page_title="Econ Express - Steam Train Dashboard",
-    page_icon="\U0001F682",
+    page_title="Econ Sim - Data Intelligence",
+    page_icon="\u26A1",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Inject steam train theme CSS and register Plotly template
+# Inject futuristic blue theme CSS and register Plotly template
 from ui.theme import STEAM_CSS, HEADER_BANNER, SIDEBAR_HEADER, SIDEBAR_FOOTER  # noqa: E402
 
 st.markdown(STEAM_CSS, unsafe_allow_html=True)
@@ -25,18 +25,18 @@ st.markdown(HEADER_BANNER, unsafe_allow_html=True)
 st.sidebar.markdown(SIDEBAR_HEADER, unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
-# Train-themed navigation labels
+# Navigation
 page = st.sidebar.radio(
-    "\U0001F6E4\uFE0F Route Select",
+    "\u25C8 Navigate",
     [
-        "\U0001F4E6 Download Data",
-        "\U0001F4C8 Stock / ETF Data",
-        "\U0001F50D Explore & Visualize",
-        "\U0001F517 Correlation Analysis",
-        "\U0001F4CA Inflation-Stock Models",
-        "\u2708 Cargo Plane Analysis",
-        "\U0001F6E2 Oil Tanker Analysis",
-        "\U0001F4F0 News Sentiment",
+        "\u25B8 Download Data",
+        "\u25B8 Stock / ETF Data",
+        "\u25B8 Explore & Visualize",
+        "\u25B8 Correlation Analysis",
+        "\u25B8 Inflation-Stock Models",
+        "\u25B8 Cargo Plane Analysis",
+        "\u25B8 Oil Tanker Analysis",
+        "\u25B8 News Sentiment",
     ],
 )
 

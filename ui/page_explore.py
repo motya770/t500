@@ -24,7 +24,7 @@ def _indicator_columns(df: pd.DataFrame) -> list[str]:
 
 
 def render():
-    st.header("\U0001F50D Explore & Visualize Data")
+    st.header("Explore & Visualize Data")
 
     # --- Load dataset ---
     datasets = list_saved_datasets()
