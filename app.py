@@ -4,6 +4,7 @@ Run with: streamlit run app.py
 """
 
 import streamlit as st
+from streamlit_option_menu import option_menu
 from data_sources.database import init_db
 
 init_db()
@@ -25,27 +26,68 @@ st.markdown(HEADER_BANNER, unsafe_allow_html=True)
 st.sidebar.markdown(SIDEBAR_HEADER, unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
-# Navigation
-page = st.sidebar.radio(
-    "\u25C8 Navigate",
-    [
-        "\u25B8 Download Data",
-        "\u25B8 Stock / ETF Data",
-        "\u25B8 Explore & Visualize",
-        "\u25B8 Correlation Analysis",
-        "\u25B8 Inflation-Stock Models",
-        "\u25B8 Cargo Plane Analysis",
-        "\u25B8 Oil Tanker Analysis",
-        "\u25B8 News Sentiment",
-    ],
-)
+# Navigation menu
+with st.sidebar:
+    page_name = option_menu(
+        menu_title=None,
+        options=[
+            "Download Data",
+            "Stock / ETF Data",
+            "Explore & Visualize",
+            "Correlation Analysis",
+            "Inflation-Stock Models",
+            "Cargo Plane Analysis",
+            "Oil Tanker Analysis",
+            "News Sentiment",
+        ],
+        icons=[
+            "cloud-download",
+            "graph-up-arrow",
+            "bar-chart-line",
+            "diagram-3",
+            "currency-exchange",
+            "airplane",
+            "droplet-half",
+            "newspaper",
+        ],
+        default_index=0,
+        styles={
+            "container": {
+                "padding": "0",
+                "background-color": "transparent",
+            },
+            "icon": {
+                "color": "#38BDF8",
+                "font-size": "16px",
+            },
+            "nav-link": {
+                "font-family": "'Inter', sans-serif",
+                "font-size": "14px",
+                "font-weight": "400",
+                "color": "#94A3B8",
+                "text-align": "left",
+                "padding": "10px 16px",
+                "margin": "2px 0",
+                "border-radius": "8px",
+                "background-color": "transparent",
+                "border": "1px solid transparent",
+                "transition": "all 0.3s ease",
+                "--hover-color": "rgba(0,180,216,0.08)",
+            },
+            "nav-link-selected": {
+                "background": "linear-gradient(135deg, rgba(0,180,216,0.15) 0%, rgba(129,140,248,0.12) 100%)",
+                "color": "#00B4D8",
+                "font-weight": "500",
+                "border": "1px solid rgba(0,180,216,0.3)",
+                "box-shadow": "0 0 15px rgba(0,180,216,0.1)",
+            },
+        },
+    )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(SIDEBAR_FOOTER, unsafe_allow_html=True)
 
-# Route to pages (strip emoji prefix for matching)
-page_name = page.split(" ", 1)[1] if " " in page else page
-
+# Route to pages
 if page_name == "Download Data":
     from ui.page_download import render
     render()

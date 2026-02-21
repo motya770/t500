@@ -317,11 +317,6 @@ button[kind="primary"]:hover {
     color: var(--electric-cyan);
 }
 
-/* ---- Radio buttons ---- */
-.stRadio > div {
-    color: var(--silver-white);
-}
-
 /* ---- Dataframes ---- */
 [data-testid="stDataFrame"] {
     border: 1px solid rgba(0,180,216,0.2);
