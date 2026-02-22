@@ -29,30 +29,56 @@ st.markdown(HEADER_BANNER, unsafe_allow_html=True)
 st.sidebar.markdown(SIDEBAR_HEADER, unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
+# ---------------------------------------------------------------------------
+# Determine whether data already exists so we can hide download pages
+# ---------------------------------------------------------------------------
+from data_sources.world_bank import list_saved_datasets  # noqa: E402
+
+_has_data = bool(list_saved_datasets()) or "current_dataset" in st.session_state
+
+# Data-download pages and their icons
+_DATA_PAGES = [
+    ("Macro Data", "cloud-download"),
+    ("Cargo Plane Data", "airplane"),
+    ("Oil Tanker Data", "droplet-half"),
+    ("Stock / ETF Data", "graph-up-arrow"),
+]
+
+# Analysis / visualisation pages (always visible)
+_ANALYSIS_PAGES = [
+    ("Explore & Visualize", "bar-chart-line"),
+    ("Correlation Analysis", "diagram-3"),
+    ("Inflation-Stock Models", "currency-exchange"),
+    ("News Sentiment", "newspaper"),
+]
+
+# Toggle for showing data download pages when data already exists
+with st.sidebar:
+    if _has_data:
+        show_data_pages = st.toggle(
+            "Show data download pages",
+            value=False,
+            key="show_data_pages",
+            help="Data has already been downloaded. Toggle on to access the download pages again.",
+        )
+    else:
+        show_data_pages = True  # no data yet — always show
+
+# Build the dynamic menu
+if show_data_pages:
+    _visible_pages = _DATA_PAGES + _ANALYSIS_PAGES
+else:
+    _visible_pages = _ANALYSIS_PAGES
+
+_page_options = [p[0] for p in _visible_pages]
+_page_icons = [p[1] for p in _visible_pages]
+
 # Navigation menu
 with st.sidebar:
     page_name = option_menu(
         menu_title=None,
-        options=[
-            "Macro Data",
-            "Cargo Plane Data",
-            "Oil Tanker Data",
-            "Stock / ETF Data",
-            "Explore & Visualize",
-            "Correlation Analysis",
-            "Inflation-Stock Models",
-            "News Sentiment",
-        ],
-        icons=[
-            "cloud-download",
-            "airplane",
-            "droplet-half",
-            "graph-up-arrow",
-            "bar-chart-line",
-            "diagram-3",
-            "currency-exchange",
-            "newspaper",
-        ],
+        options=_page_options,
+        icons=_page_icons,
         default_index=0,
         styles={
             "container": {
@@ -86,6 +112,35 @@ with st.sidebar:
             },
         },
     )
+
+# ---------------------------------------------------------------------------
+# Quick-download buttons (shown when data pages are hidden)
+# ---------------------------------------------------------------------------
+if _has_data and not show_data_pages:
+    with st.sidebar:
+        st.markdown("---")
+        with st.expander("Quick Download Data", expanded=False):
+            st.caption("Download new data without leaving the current page.")
+
+            if st.button("Macro Data", key="qd_macro", use_container_width=True):
+                st.session_state["_qd_target"] = "Macro Data"
+                st.session_state["show_data_pages"] = True
+                st.rerun()
+
+            if st.button("Cargo Plane Data", key="qd_cargo", use_container_width=True):
+                st.session_state["_qd_target"] = "Cargo Plane Data"
+                st.session_state["show_data_pages"] = True
+                st.rerun()
+
+            if st.button("Oil Tanker Data", key="qd_oil", use_container_width=True):
+                st.session_state["_qd_target"] = "Oil Tanker Data"
+                st.session_state["show_data_pages"] = True
+                st.rerun()
+
+            if st.button("Stock / ETF Data", key="qd_stock", use_container_width=True):
+                st.session_state["_qd_target"] = "Stock / ETF Data"
+                st.session_state["show_data_pages"] = True
+                st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(SIDEBAR_FOOTER, unsafe_allow_html=True)
