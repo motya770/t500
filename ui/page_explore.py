@@ -32,7 +32,7 @@ def render():
         st.info("No datasets found. Go to the **Download Data** page first.")
         return
 
-    source = st.radio("Data source", ["Current session", "Saved dataset"], horizontal=True)
+    source = st.radio("Data source", ["Saved dataset", "Current session"], horizontal=True)
 
     df = None
     if source == "Current session" and "current_dataset" in st.session_state:

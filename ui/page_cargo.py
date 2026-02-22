@@ -68,10 +68,10 @@ def render():
     data_options = []
     if not data_exists:
         data_options.append("Download cargo indicators now")
-    if has_session_data:
-        data_options.append("Use current session data")
     if has_saved_datasets:
         data_options.append("Load saved dataset")
+    if has_session_data:
+        data_options.append("Use current session data")
 
     data_mode = st.radio(
         "How to load data",
