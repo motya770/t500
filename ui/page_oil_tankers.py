@@ -86,13 +86,22 @@ def render():
 
     # --- Data source ---
     st.subheader("Data Source")
+
+    has_session_data = "current_dataset" in st.session_state
+    has_saved_datasets = bool(list_saved_datasets())
+    data_exists = has_session_data or has_saved_datasets
+
+    data_options = []
+    if not data_exists:
+        data_options.append("Download oil indicators now")
+    if has_session_data:
+        data_options.append("Use current session data")
+    if has_saved_datasets:
+        data_options.append("Load saved dataset")
+
     data_mode = st.radio(
         "How to load data",
-        [
-            "Download oil indicators now",
-            "Use current session data",
-            "Load saved dataset",
-        ],
+        data_options,
         horizontal=True,
         key="oil_data_mode",
     )

@@ -102,7 +102,8 @@ def render():
 
     # -- Stock data ---------------------------------------------------
     st.markdown("---")
-    use_stock = st.checkbox("Download stock / ETF data as target variable", value=True, key="is_use_stock")
+    has_stock_data = "is_stock_annual" in st.session_state
+    use_stock = st.checkbox("Use stock / ETF data as target variable", value=True, key="is_use_stock")
 
     stock_col_name = None
     if use_stock:
@@ -122,25 +123,26 @@ def render():
                 key="is_stock_metric",
             )
 
-        if st.button("Download stock data", key="is_dl_stock"):
-            year_min = int(work_df["year"].min()) if "year" in work_df.columns else 2000
-            year_max = int(work_df["year"].max()) if "year" in work_df.columns else 2024
-            with st.spinner(f"Downloading {ticker} data …"):
-                try:
-                    raw_stock = download_stock_data([ticker], year_min, year_max)
-                    if raw_stock.empty:
-                        st.error("No stock data returned. Check the ticker symbol.")
+        if not has_stock_data:
+            if st.button("Download stock data", key="is_dl_stock"):
+                year_min = int(work_df["year"].min()) if "year" in work_df.columns else 2000
+                year_max = int(work_df["year"].max()) if "year" in work_df.columns else 2024
+                with st.spinner(f"Downloading {ticker} data …"):
+                    try:
+                        raw_stock = download_stock_data([ticker], year_min, year_max)
+                        if raw_stock.empty:
+                            st.error("No stock data returned. Check the ticker symbol.")
+                            return
+                        annual_stock = compute_annual_returns(raw_stock)
+                        if annual_stock.empty:
+                            st.error("Could not compute annual returns from stock data.")
+                            return
+                        st.session_state["is_stock_annual"] = annual_stock
+                        st.session_state["is_stock_ticker"] = ticker
+                        st.success(f"Downloaded {len(annual_stock)} years of {ticker} data.")
+                    except Exception as exc:
+                        st.error(f"Failed to download stock data: {exc}")
                         return
-                    annual_stock = compute_annual_returns(raw_stock)
-                    if annual_stock.empty:
-                        st.error("Could not compute annual returns from stock data.")
-                        return
-                    st.session_state["is_stock_annual"] = annual_stock
-                    st.session_state["is_stock_ticker"] = ticker
-                    st.success(f"Downloaded {len(annual_stock)} years of {ticker} data.")
-                except Exception as exc:
-                    st.error(f"Failed to download stock data: {exc}")
-                    return
 
         if "is_stock_annual" in st.session_state:
             annual_stock = st.session_state["is_stock_annual"]
