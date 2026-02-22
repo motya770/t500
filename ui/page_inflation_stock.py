@@ -66,7 +66,7 @@ def render():
 
     econ_source = st.radio(
         "Economic data source",
-        ["Current session", "Saved dataset"],
+        ["Saved dataset", "Current session"],
         horizontal=True,
         key="is_econ_source",
     )
