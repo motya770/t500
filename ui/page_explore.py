@@ -120,9 +120,11 @@ def _render_time_series(df, indicators, countries):
         x="year",
         y=indicator,
         color="country",
+        line_dash="country",
         title=_get_indicator_label(indicator),
         labels={indicator: _get_indicator_label(indicator), "year": "Year"},
         color_discrete_sequence=CHART_COLORS,
+        line_dash_sequence=["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"],
     )
     fig.update_layout(hovermode="x unified")
     apply_steam_style(fig)
@@ -183,11 +185,13 @@ def _render_scatter(df, indicators, countries):
         st.warning("No data for this selection.")
         return
 
+    symbol_col = "country" if color_by == "Country" else None
     fig = px.scatter(
         filtered,
         x=x_ind,
         y=y_ind,
         color="country" if color_by == "Country" else "year",
+        symbol=symbol_col,
         hover_data=["country", "year"],
         title=f"{_get_indicator_label(x_ind)} vs {_get_indicator_label(y_ind)}",
         labels={

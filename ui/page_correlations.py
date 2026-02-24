@@ -316,7 +316,7 @@ def _run_pca(df):
         name="Cumulative",
         mode="lines+markers",
         marker_color=EMBER,
-        line_color=EMBER,
+        line=dict(color=EMBER, dash="dash"),
     )
     fig.update_layout(title="PCA Explained Variance", yaxis_title="%")
     apply_steam_style(fig)
