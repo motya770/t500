@@ -47,23 +47,19 @@ _DATA_PAGES = [
 
 # Analysis / visualisation pages (always visible)
 _ANALYSIS_PAGES = [
+    ("Investigate Data", "table"),
     ("Explore & Visualize", "bar-chart-line"),
     ("Correlation Analysis", "diagram-3"),
     ("Inflation-Stock Models", "currency-exchange"),
     ("News Sentiment", "newspaper"),
 ]
 
-# Toggle for showing data download pages when data already exists
-with st.sidebar:
-    if _has_data:
-        show_data_pages = st.toggle(
-            "Show data download pages",
-            value=False,
-            key="show_data_pages",
-            help="Data has already been downloaded. Toggle on to access the download pages again.",
-        )
-    else:
-        show_data_pages = True  # no data yet — always show
+# Read toggle value from session state BEFORE building the menu
+# (the actual toggle widget is rendered AFTER the menu)
+if _has_data:
+    show_data_pages = st.session_state.get("show_data_pages", False)
+else:
+    show_data_pages = True  # no data yet — always show
 
 # Build the dynamic menu
 if show_data_pages:
@@ -114,37 +110,23 @@ with st.sidebar:
         },
     )
 
-# ---------------------------------------------------------------------------
-# Quick-download buttons (shown when data pages are hidden)
-# ---------------------------------------------------------------------------
-if _has_data and not show_data_pages:
-    with st.sidebar:
+# Toggle and quick-download below the menu
+with st.sidebar:
+    if _has_data:
         st.markdown("---")
-        with st.expander("Quick Download Data", expanded=False):
-            st.caption("Download new data without leaving the current page.")
+        show_data_pages = st.toggle(
+            "Show data download pages",
+            value=False,
+            key="show_data_pages",
+            help="Data has already been downloaded. Toggle on to access the download pages again.",
+        )
 
-            if st.button("Macro Data", key="qd_macro", use_container_width=True):
-                st.session_state["_qd_target"] = "Macro Data"
-                st.session_state["show_data_pages"] = True
-                st.rerun()
-
-            if st.button("USA Economy (FRED)", key="qd_fred", use_container_width=True):
-                st.session_state["_qd_target"] = "USA Economy (FRED)"
-                st.session_state["show_data_pages"] = True
-                st.rerun()
-
-            if st.button("Cargo Plane Data", key="qd_cargo", use_container_width=True):
-                st.session_state["_qd_target"] = "Cargo Plane Data"
-                st.session_state["show_data_pages"] = True
-                st.rerun()
-
-            if st.button("Oil Tanker Data", key="qd_oil", use_container_width=True):
-                st.session_state["_qd_target"] = "Oil Tanker Data"
-                st.session_state["show_data_pages"] = True
-                st.rerun()
-
-            if st.button("Stock / ETF Data", key="qd_stock", use_container_width=True):
-                st.session_state["_qd_target"] = "Stock / ETF Data"
+    # Quick-download buttons (shown when data pages are hidden)
+    if _has_data and not show_data_pages:
+        for page_label, _ in _DATA_PAGES:
+            key = f"qd_{page_label.lower().replace(' ', '_').replace('/', '_')}"
+            if st.button(f":arrow_down: {page_label}", key=key, use_container_width=True):
+                st.session_state["_qd_target"] = page_label
                 st.session_state["show_data_pages"] = True
                 st.rerun()
 
@@ -160,6 +142,9 @@ elif page_name == "USA Economy (FRED)":
     render()
 elif page_name == "Stock / ETF Data":
     from ui.page_stock_download import render
+    render()
+elif page_name == "Investigate Data":
+    from ui.page_investigate import render
     render()
 elif page_name == "Explore & Visualize":
     from ui.page_explore import render
