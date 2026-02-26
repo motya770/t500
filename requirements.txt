@@ -16,3 +16,5 @@ requests>=2.31.0
 huggingface_hub>=0.20.0
 pyarrow>=14.0.0
 streamlit-option-menu>=0.3.6
+fredapi>=0.5.0
+lxml>=4.9.0
