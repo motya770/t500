@@ -435,12 +435,11 @@ def run_pytorch_model(
     if len(X_seq) < 4:
         return {"error": "Not enough sequences. Try a shorter sequence length."}
 
-    # ---- train / val / test split (70 / 15 / 15) ----
+    # ---- train / test split (80 / 20) ----
     n = len(X_seq)
-    train_end = max(2, int(n * 0.70))
-    val_end = max(train_end + 1, int(n * 0.85))
-    X_train, X_val, X_test = X_seq[:train_end], X_seq[train_end:val_end], X_seq[val_end:]
-    y_train, y_val, y_test = y_seq[:train_end], y_seq[train_end:val_end], y_seq[val_end:]
+    train_end = max(2, int(n * 0.80))
+    X_train, X_test = X_seq[:train_end], X_seq[train_end:]
+    y_train, y_test = y_seq[:train_end], y_seq[train_end:]
 
     input_dim = X_seq.shape[2]
 
@@ -466,9 +465,18 @@ def run_pytorch_model(
     else:
         return {"error": f"Unknown model type: {model_type}"}
 
+    # ---- split training data for early stopping (90/10 internal) ----
+    n_train = len(X_train)
+    es_split = max(2, int(n_train * 0.90))
+    X_tr_inner, X_es = X_train[:es_split], X_train[es_split:]
+    y_tr_inner, y_es = y_train[:es_split], y_train[es_split:]
+    # If not enough for early stopping, just use full train set for both
+    if len(X_es) < 1:
+        X_es, y_es = X_train[-1:], y_train[-1:]
+
     # ---- train ----
     history = _train_pytorch_model(
-        model, X_train, y_train, X_val, y_val,
+        model, X_tr_inner, y_tr_inner, X_es, y_es,
         epochs=epochs, lr=lr, progress_callback=progress_callback,
     )
 
@@ -476,16 +484,13 @@ def run_pytorch_model(
     model.eval()
     with torch.no_grad():
         train_pred = model(X_train).numpy()
-        val_pred = model(X_val).numpy()
         test_pred = model(X_test).numpy() if len(X_test) > 0 else np.array([])
         all_pred = model(X_seq).numpy()
 
     inv = lambda a: scaler_y.inverse_transform(a.reshape(-1, 1)).ravel()
     train_pred_orig = inv(train_pred)
-    val_pred_orig = inv(val_pred)
     all_pred_orig = inv(all_pred)
     y_train_orig = inv(y_train.numpy())
-    y_val_orig = inv(y_val.numpy())
     y_all_orig = inv(y_seq.numpy())
 
     metrics: dict[str, float] = {
@@ -493,10 +498,6 @@ def run_pytorch_model(
         "train_mse": float(mean_squared_error(y_train_orig, train_pred_orig)),
         "train_mae": float(mean_absolute_error(y_train_orig, train_pred_orig)),
     }
-    if len(y_val_orig) > 1:
-        metrics["val_r2"] = float(r2_score(y_val_orig, val_pred_orig))
-        metrics["val_mse"] = float(mean_squared_error(y_val_orig, val_pred_orig))
-        metrics["val_mae"] = float(mean_absolute_error(y_val_orig, val_pred_orig))
     if len(test_pred) > 1:
         test_pred_orig = inv(test_pred)
         y_test_orig = inv(y_test.numpy())
@@ -520,7 +521,6 @@ def run_pytorch_model(
             "predicted": all_pred_orig.tolist(),
             "years": years,
             "train_size": train_end,
-            "val_size": val_end - train_end,
         },
     }
 
