@@ -39,6 +39,7 @@ _has_data = bool(list_saved_datasets()) or "current_dataset" in st.session_state
 # Data-download pages and their icons
 _DATA_PAGES = [
     ("Macro Data", "cloud-download"),
+    ("USA Economy (FRED)", "flag"),
     ("Cargo Plane Data", "airplane"),
     ("Oil Tanker Data", "droplet-half"),
     ("Stock / ETF Data", "graph-up-arrow"),
@@ -127,6 +128,11 @@ if _has_data and not show_data_pages:
                 st.session_state["show_data_pages"] = True
                 st.rerun()
 
+            if st.button("USA Economy (FRED)", key="qd_fred", use_container_width=True):
+                st.session_state["_qd_target"] = "USA Economy (FRED)"
+                st.session_state["show_data_pages"] = True
+                st.rerun()
+
             if st.button("Cargo Plane Data", key="qd_cargo", use_container_width=True):
                 st.session_state["_qd_target"] = "Cargo Plane Data"
                 st.session_state["show_data_pages"] = True
@@ -148,6 +154,9 @@ st.sidebar.markdown(SIDEBAR_FOOTER, unsafe_allow_html=True)
 # Route to pages
 if page_name == "Macro Data":
     from ui.page_download import render
+    render()
+elif page_name == "USA Economy (FRED)":
+    from ui.page_usa_economy import render
     render()
 elif page_name == "Stock / ETF Data":
     from ui.page_stock_download import render

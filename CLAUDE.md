@@ -16,10 +16,15 @@ Economic Simulation & Correlation Analysis Dashboard — a Streamlit web applica
 │   └── correlations.py      # Statistical and ML correlation methods
 ├── data_sources/
 │   ├── __init__.py
-│   └── world_bank.py        # World Bank API data fetching and CSV persistence
+│   ├── world_bank.py        # World Bank API data fetching and CSV persistence
+│   ├── fred_data.py          # FRED (Federal Reserve) US economic data
+│   ├── stock_data.py         # Yahoo Finance stock/ETF data
+│   └── index_components.py   # S&P 500 and Nasdaq 100 ticker lists
 └── ui/
     ├── __init__.py
-    ├── page_download.py      # Data download page
+    ├── page_download.py      # Data download page (World Bank)
+    ├── page_usa_economy.py   # USA economy data download (FRED)
+    ├── page_stock_download.py # Stock/ETF data download (incl. S&P 500, Nasdaq 100)
     ├── page_explore.py       # Data exploration & visualization page
     └── page_correlations.py  # Correlation analysis page
 ```

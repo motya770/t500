@@ -46,13 +46,52 @@ TICKER_CATEGORIES = {
     },
 }
 
+# Sector ETFs for quick sector exposure
+SECTOR_ETFS = {
+    "XLK": "Technology Select Sector SPDR",
+    "XLV": "Health Care Select Sector SPDR",
+    "XLF": "Financial Select Sector SPDR",
+    "XLY": "Consumer Discretionary Select Sector SPDR",
+    "XLC": "Communication Services Select Sector SPDR",
+    "XLI": "Industrial Select Sector SPDR",
+    "XLP": "Consumer Staples Select Sector SPDR",
+    "XLE": "Energy Select Sector SPDR",
+    "XLU": "Utilities Select Sector SPDR",
+    "XLRE": "Real Estate Select Sector SPDR",
+    "XLB": "Materials Select Sector SPDR",
+}
+
 
 def get_all_tickers() -> dict[str, str]:
-    """Return a flat dict of all ticker symbols to their descriptions."""
+    """Return a flat dict of all ETF ticker symbols to their descriptions."""
     result = {}
     for tickers in TICKER_CATEGORIES.values():
         result.update(tickers)
     return result
+
+
+def get_sp500_tickers() -> dict[str, dict[str, str]]:
+    """Return S&P 500 components organized by GICS sector."""
+    from data_sources.index_components import get_sp500_components
+    return get_sp500_components()
+
+
+def get_nasdaq100_tickers() -> dict[str, dict[str, str]]:
+    """Return Nasdaq 100 components organized by sector."""
+    from data_sources.index_components import get_nasdaq100_components
+    return get_nasdaq100_components()
+
+
+def get_sp500_flat() -> dict[str, str]:
+    """Return flat dict of all S&P 500 tickers to names."""
+    from data_sources.index_components import get_sp500_flat
+    return get_sp500_flat()
+
+
+def get_nasdaq100_flat() -> dict[str, str]:
+    """Return flat dict of all Nasdaq 100 tickers to names."""
+    from data_sources.index_components import get_nasdaq100_flat
+    return get_nasdaq100_flat()
 
 
 def download_stock_data(
