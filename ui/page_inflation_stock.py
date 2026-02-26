@@ -22,6 +22,8 @@ from data_sources.stock_data import (
     STOCK_TICKERS,
     download_stock_data,
     compute_annual_returns,
+    save_stock_dataset,
+    load_stock_dataset,
 )
 from analysis.inflation_stock_models import (
     run_pytorch_model,
@@ -102,7 +104,6 @@ def render():
 
     # -- Stock data ---------------------------------------------------
     st.markdown("---")
-    has_stock_data = "is_stock_annual" in st.session_state
     use_stock = st.checkbox("Use stock / ETF data as target variable", value=True, key="is_use_stock")
 
     stock_col_name = None
@@ -123,6 +124,18 @@ def render():
                 key="is_stock_metric",
             )
 
+        # Try to load previously saved stock data from database
+        if "is_stock_annual" not in st.session_state:
+            db_name = f"is_stock_{ticker}_annual"
+            try:
+                saved = load_stock_dataset(db_name)
+                if saved is not None and not saved.empty:
+                    st.session_state["is_stock_annual"] = saved
+                    st.session_state["is_stock_ticker"] = ticker
+            except Exception:
+                pass
+
+        has_stock_data = "is_stock_annual" in st.session_state
         if not has_stock_data:
             if st.button("Download stock data", key="is_dl_stock"):
                 year_min = int(work_df["year"].min()) if "year" in work_df.columns else 2000
@@ -137,9 +150,13 @@ def render():
                         if annual_stock.empty:
                             st.error("Could not compute annual returns from stock data.")
                             return
+                        # Save to database for persistence
+                        db_name = f"is_stock_{ticker}_annual"
+                        save_stock_dataset(annual_stock, db_name)
                         st.session_state["is_stock_annual"] = annual_stock
                         st.session_state["is_stock_ticker"] = ticker
-                        st.success(f"Downloaded {len(annual_stock)} years of {ticker} data.")
+                        st.success(f"Downloaded and saved {len(annual_stock)} years of {ticker} data.")
+                        st.rerun()
                     except Exception as exc:
                         st.error(f"Failed to download stock data: {exc}")
                         return
@@ -371,8 +388,8 @@ def _render_results(result: dict, target_col: str, feature_cols: list[str], is_p
     cols = st.columns(3)
     if is_pytorch:
         cols[0].metric("Train R²", f"{metrics.get('train_r2', 0):.4f}")
-        cols[1].metric("Val R²", f"{metrics.get('val_r2', 0):.4f}" if "val_r2" in metrics else "N/A")
-        cols[2].metric("Val MAE", f"{metrics.get('val_mae', 0):.4f}" if "val_mae" in metrics else "N/A")
+        cols[1].metric("Test R²", f"{metrics.get('test_r2', 0):.4f}" if "test_r2" in metrics else "N/A")
+        cols[2].metric("Test MAE", f"{metrics.get('test_mae', 0):.4f}" if "test_mae" in metrics else "N/A")
     else:
         cols[0].metric("R² (full)", f"{metrics.get('r2', 0):.4f}")
         cols[1].metric("MSE", f"{metrics.get('mse', 0):.4f}")
@@ -394,14 +411,8 @@ def _render_results(result: dict, target_col: str, feature_cols: list[str], is_p
         train_size = preds["train_size"]
         if train_size < len(pred_df):
             split_year = pred_df["Year"].iloc[train_size]
-            label = "Train / Val" if is_pytorch else "Train / Test"
             fig.add_vline(x=split_year, line_dash="dash", line_color="gray",
-                          annotation_text=label)
-    if is_pytorch and "val_size" in preds:
-        val_end = preds["train_size"] + preds["val_size"]
-        if val_end < len(pred_df):
-            fig.add_vline(x=pred_df["Year"].iloc[val_end], line_dash="dash",
-                          line_color="orange", annotation_text="Val / Test")
+                          annotation_text="Train / Test")
 
     fig.update_layout(
         title=f"Predicted vs Actual — {target_label}",
