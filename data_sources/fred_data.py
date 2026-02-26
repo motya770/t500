@@ -4,7 +4,8 @@ Downloads detailed US economic data from FRED using the fredapi package.
 Provides comprehensive data on housing, auto sales, retail, consumer spending,
 manufacturing, employment, interest rates, and more.
 
-Requires a free FRED API key from https://fred.stlouisfed.org/docs/api/api_key.html
+API key is read from the FRED_API_KEY environment variable.
+Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html
 """
 
 import pandas as pd

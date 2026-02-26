@@ -5,6 +5,7 @@ Data) including housing market, auto sales, retail/consumer spending,
 manufacturing, employment, inflation, interest rates, GDP, and more.
 """
 
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -18,6 +19,11 @@ from data_sources.fred_data import (
 from ui.theme import apply_steam_style, CHART_COLORS, BRASS
 
 
+def _get_api_key() -> str:
+    """Get FRED API key from environment variable."""
+    return os.environ.get("FRED_API_KEY", "")
+
+
 def render():
     st.header("USA Economy Data (FRED)")
     st.write(
@@ -26,29 +32,59 @@ def render():
         "employment, inflation, interest rates, GDP, trade, and more."
     )
 
-    # --- API Key ---
-    st.subheader("1. FRED API Key")
-    st.caption(
-        "Get a free API key at [fred.stlouisfed.org/docs/api/api_key.html]"
-        "(https://fred.stlouisfed.org/docs/api/api_key.html) "
-        "(requires a free FRED account)."
-    )
-    api_key = st.text_input(
-        "FRED API Key",
-        type="password",
-        key="fred_api_key",
-        help="Your FRED API key. Free to obtain from the FRED website.",
-    )
+    # --- API Key from env ---
+    api_key = _get_api_key()
     if not api_key:
-        st.info("Enter your FRED API key to proceed.")
+        st.error(
+            "FRED API key not found. Set the `FRED_API_KEY` environment variable. "
+            "Get a free key at [fred.stlouisfed.org/docs/api/api_key.html]"
+            "(https://fred.stlouisfed.org/docs/api/api_key.html)."
+        )
+        return
+
+    all_series = get_all_fred_series()
+
+    # --- Download ALL shortcut ---
+    st.subheader("Quick Download")
+    st.write(
+        f"Download **all {len(all_series)} FRED series** at once, "
+        "or pick individual series below."
+    )
+
+    col_all1, col_all2 = st.columns(2)
+    with col_all1:
+        download_all = st.button(
+            f"Download ALL FRED Data ({len(all_series)} series)",
+            type="primary",
+            use_container_width=True,
+            key="fred_download_all",
+        )
+    with col_all2:
+        download_all_annual = st.button(
+            f"Download ALL (Annual, World Bank compatible)",
+            use_container_width=True,
+            key="fred_download_all_annual",
+        )
+
+    if download_all or download_all_annual:
+        _run_download(
+            series_ids=list(all_series.keys()),
+            api_key=api_key,
+            dataset_name="usa_economy_fred_all",
+            annual=download_all_annual,
+            start_year=2000,
+            end_year=2025,
+            frequency=None,
+            all_series=all_series,
+        )
         return
 
     # --- Series Selection ---
-    st.subheader("2. Select Economic Series")
+    st.divider()
+    st.subheader("1. Select Economic Series")
     st.caption("Choose which data series to download from FRED.")
 
-    selected_series = []
-    all_series = get_all_fred_series()
+    selected_series: list[str] = []
 
     # Quick-select presets
     preset = st.selectbox(
@@ -122,7 +158,7 @@ def render():
     st.success(f"Selected **{len(selected_series)}** series")
 
     # --- Date Range ---
-    st.subheader("3. Date Range & Frequency")
+    st.subheader("2. Date Range & Frequency")
     col1, col2, col3 = st.columns(3)
     with col1:
         start_year = st.number_input(
@@ -151,7 +187,7 @@ def render():
         return
 
     # --- Dataset Name ---
-    st.subheader("4. Name Your Dataset")
+    st.subheader("3. Name Your Dataset")
     dataset_name = st.text_input(
         "Dataset name",
         value="usa_economy_fred",
@@ -179,72 +215,94 @@ def render():
         )
 
     if download_raw or download_annual:
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+        _run_download(
+            series_ids=selected_series,
+            api_key=api_key,
+            dataset_name=dataset_name,
+            annual=download_annual,
+            start_year=start_year,
+            end_year=end_year,
+            frequency=frequency,
+            all_series=all_series,
+        )
 
-        def progress_cb(current, total, label):
-            pct = current / total if total > 0 else 0
-            progress_bar.progress(pct)
-            status_text.text(f"Downloading {current + 1}/{total}: {label}")
 
-        try:
-            if download_annual:
-                df, failed = download_fred_series_annual(
-                    series_ids=selected_series,
-                    start_year=start_year,
-                    end_year=end_year,
-                    api_key=api_key,
-                    progress_callback=progress_cb,
-                )
-            else:
-                df, failed = download_fred_series(
-                    series_ids=selected_series,
-                    start_date=f"{start_year}-01-01",
-                    end_date=f"{end_year}-12-31",
-                    api_key=api_key,
-                    frequency=frequency,
-                    progress_callback=progress_cb,
-                )
+def _run_download(
+    series_ids: list[str],
+    api_key: str,
+    dataset_name: str,
+    annual: bool,
+    start_year: int,
+    end_year: int,
+    frequency: str | None,
+    all_series: dict[str, str],
+):
+    """Execute the FRED download, save, and display results."""
+    progress_bar = st.progress(0)
+    status_text = st.empty()
 
-            progress_bar.progress(1.0)
-            status_text.text("Download complete!")
+    def progress_cb(current, total, label):
+        pct = current / total if total > 0 else 0
+        progress_bar.progress(pct)
+        status_text.text(f"Downloading {current + 1}/{total}: {label}")
 
-            if df.empty:
-                st.error(
-                    "No data returned. Check your API key and series selection."
-                )
-                if failed:
-                    st.warning(f"Failed series: {', '.join(failed)}")
-                return
-
-            # Save
-            save_fred_dataset(df, dataset_name)
-            st.success(
-                f"Saved **{dataset_name}** ({len(df)} rows, "
-                f"{len(df.columns)} columns)"
+    try:
+        if annual:
+            df, failed = download_fred_series_annual(
+                series_ids=series_ids,
+                start_year=start_year,
+                end_year=end_year,
+                api_key=api_key,
+                progress_callback=progress_cb,
+            )
+        else:
+            df, failed = download_fred_series(
+                series_ids=series_ids,
+                start_date=f"{start_year}-01-01",
+                end_date=f"{end_year}-12-31",
+                api_key=api_key,
+                frequency=frequency,
+                progress_callback=progress_cb,
             )
 
+        progress_bar.progress(1.0)
+        status_text.text("Download complete!")
+
+        if df.empty:
+            st.error(
+                "No data returned. Check your API key and series selection."
+            )
             if failed:
-                st.warning(
-                    f"{len(failed)} series failed to download: {', '.join(failed)}"
-                )
+                st.warning(f"Failed series: {', '.join(failed)}")
+            return
 
-            # Store in session state
-            st.session_state["current_dataset"] = df
-            st.session_state["current_dataset_name"] = dataset_name
-            # Build indicator names map for compatibility
-            indicator_names = {
-                sid: desc
-                for sid, desc in all_series.items()
-                if sid in df.columns
-            }
-            st.session_state["indicator_names"] = indicator_names
+        # Save
+        save_fred_dataset(df, dataset_name)
+        st.success(
+            f"Saved **{dataset_name}** ({len(df)} rows, "
+            f"{len(df.columns)} columns)"
+        )
 
-            # --- Show results ---
-            _show_fred_results(df, indicator_names)
+        if failed:
+            st.warning(
+                f"{len(failed)} series failed to download: {', '.join(failed)}"
+            )
 
-        except Exception as e:
-            st.error(f"Download failed: {e}")
+        # Store in session state
+        st.session_state["current_dataset"] = df
+        st.session_state["current_dataset_name"] = dataset_name
+        indicator_names = {
+            sid: desc
+            for sid, desc in all_series.items()
+            if sid in df.columns
+        }
+        st.session_state["indicator_names"] = indicator_names
+
+        # --- Show results ---
+        _show_fred_results(df, indicator_names)
+
+    except Exception as e:
+        st.error(f"Download failed: {e}")
 
 
 def _show_fred_results(df: pd.DataFrame, indicator_names: dict[str, str]):
