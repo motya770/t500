@@ -43,15 +43,18 @@ _DATA_PAGES = [
     ("Cargo Plane Data", "airplane"),
     ("Oil Tanker Data", "droplet-half"),
     ("Stock / ETF Data", "graph-up-arrow"),
+    ("Global Financial Markets", "currency-exchange"),
+    ("Global Monetary & Bonds", "bank"),
+    ("Global Sentiment & Trade", "graph-up"),
 ]
 
 # Analysis / visualisation pages (always visible)
 _ANALYSIS_PAGES = [
-    ("Investigate Data", "table"),
-    ("Explore & Visualize", "bar-chart-line"),
+    ("Stock Analyses", "currency-exchange"),
     ("Correlation Analysis", "diagram-3"),
-    ("Inflation-Stock Models", "currency-exchange"),
+    ("Explore & Visualize", "bar-chart-line"),
     ("News Sentiment", "newspaper"),
+    ("Investigate Data", "table"),
 ]
 
 # Read toggle value from session state BEFORE building the menu
@@ -110,7 +113,7 @@ with st.sidebar:
         },
     )
 
-# Toggle and quick-download below the menu
+# Toggle for data-download pages (below the menu)
 with st.sidebar:
     if _has_data:
         st.markdown("---")
@@ -120,15 +123,6 @@ with st.sidebar:
             key="show_data_pages",
             help="Data has already been downloaded. Toggle on to access the download pages again.",
         )
-
-    # Quick-download buttons (shown when data pages are hidden)
-    if _has_data and not show_data_pages:
-        for page_label, _ in _DATA_PAGES:
-            key = f"qd_{page_label.lower().replace(' ', '_').replace('/', '_')}"
-            if st.button(f":arrow_down: {page_label}", key=key, use_container_width=True):
-                st.session_state["_qd_target"] = page_label
-                st.session_state["show_data_pages"] = True
-                st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(SIDEBAR_FOOTER, unsafe_allow_html=True)
@@ -152,7 +146,7 @@ elif page_name == "Explore & Visualize":
 elif page_name == "Correlation Analysis":
     from ui.page_correlations import render
     render()
-elif page_name == "Inflation-Stock Models":
+elif page_name == "Stock Analyses":
     from ui.page_inflation_stock import render
     render()
 elif page_name == "Cargo Plane Data":
@@ -163,4 +157,13 @@ elif page_name == "Oil Tanker Data":
     render()
 elif page_name == "News Sentiment":
     from ui.page_news_sentiment import render
+    render()
+elif page_name == "Global Financial Markets":
+    from ui.page_global_markets import render
+    render()
+elif page_name == "Global Monetary & Bonds":
+    from ui.page_global_monetary import render
+    render()
+elif page_name == "Global Sentiment & Trade":
+    from ui.page_global_sentiment import render
     render()

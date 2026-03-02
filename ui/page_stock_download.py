@@ -194,7 +194,6 @@ def render():
             # Store in session state
             st.session_state["stock_data"] = df
             st.session_state["stock_annual"] = annual
-            st.session_state["stock_dataset_name"] = dataset_name
 
             # --- Visualizations ---
             _show_stock_results(df, annual, ticker_names)
